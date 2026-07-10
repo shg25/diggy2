@@ -19,7 +19,7 @@ var velJikiSh2 = 16;
 var velJikiSh3 = 6;
 
 var groupTeki = 'groupTeki';
-var numTeki;
+var numTeki = 0; // 1面の雑魚敵の数(湧きで++、画面外/撃破で--)
 var teki2; // 2面の敵(とぅと郎)。1体だけなので使い回す
 
 var groupPwr = 'groupPwr';
@@ -346,8 +346,7 @@ function makePwr() {
 	.on('ping', function() {
 		if (!this.get('active')) return;
 		if (this.isOutOfBounds(true)) {
-			numTeki--;
-			this.remove();
+			this.remove(); // アイテムは敵数(numTeki)に入っていないので減らさない
 			return;
 		}
 		touchJiki(this);

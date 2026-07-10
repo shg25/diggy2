@@ -1,7 +1,7 @@
 'use strict';
 
 var moveJiki = new DGE.Interval({
-	delay : DGE.Interval.formatFPS(30),
+	delay : DGE.Interval.formatFPS(FPS),
 	interval : function() {
 		if (keyboard.isDown(keyboard.UP)) {
 			jiki.y -= velJiki;
@@ -27,15 +27,15 @@ var moveJiki = new DGE.Interval({
 });
 
 var stage1 = new DGE.Interval({
-	delay : DGE.Interval.formatFPS(30),
+	delay : DGE.Interval.formatFPS(FPS),
 	interval : function() {
 		counter += 1;
 		if (stepFlg === STEP_START && counter >= 10) goCome();
 		if (isFightBoss() && (counter % 2) === 0) makeBossSh1(counter / 2);
 		
 		if (!isFight()) return;
-		if ((DGE.rand(1, 180) === 1)) makePwr();
-		if ((numTeki === 0) || (DGE.rand(1, 20) === 1)) {
+		if ((DGE.rand(1, PWR_SPAWN_RATE) === 1)) makePwr();
+		if ((numTeki === 0) || (DGE.rand(1, TEKI1_SPAWN_RATE) === 1)) {
 			numTeki++;
 			makeTeki1();
 		}
@@ -43,7 +43,7 @@ var stage1 = new DGE.Interval({
 });
 
 var stage2 = new DGE.Interval({
-	delay : DGE.Interval.formatFPS(30),
+	delay : DGE.Interval.formatFPS(FPS),
 	interval : function() {
 		counter += 1;
 		if (stepFlg === STEP_START && counter >= 10) goCome();
@@ -51,7 +51,7 @@ var stage2 = new DGE.Interval({
 		if (stepFlg === STEP_BATTLE && (counter % 50) === 0) newSpriteBossSh2(1);
 		
 		if (!isFight()) return;
-		if ((DGE.rand(1, 180) === 1)) makePwr();
+		if ((DGE.rand(1, PWR_SPAWN_RATE) === 1)) makePwr();
 		moveTeki2();
 	}
 });

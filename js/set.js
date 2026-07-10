@@ -22,7 +22,7 @@ function rmGroupTeki() {
 	bombTeki = 1;
 	setTimeout(function() {
 		bombTeki = 0;
-	}, 600);
+	}, BOMB_DURATION_MS);
 }
 
 // --------------------------------------------------

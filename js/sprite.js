@@ -78,7 +78,7 @@ function removeJiki() {
 	setTimeout(function() {
 		jiki.remove();
 		// jiki.hide();
-	}, 600);
+	}, BAN_DURATION_MS);
 }
 
 function pushJikiShots(shots, num, def) {
@@ -316,7 +316,7 @@ var PWR_DEFS = [
 ];
 
 function makePwr() {
-	var n = Math.floor(Math.random() * 3);
+	var n = Math.floor(Math.random() * PWR_DEFS.length);
 	var def = PWR_DEFS[n];
 	var velocity = def.velocity;
 	var lr = Math.floor(Math.random() * 2);
@@ -356,7 +356,7 @@ var TEKI1_DEFS = [
 
 // 1面の敵機作る
 function makeTeki1() {
-	var n = Math.floor(Math.random() * 4);
+	var n = Math.floor(Math.random() * TEKI1_DEFS.length);
 	var def = TEKI1_DEFS[n];
 	var velocity = def.velocity;
 	var angle = Math.floor(Math.random() * def.angRange) - def.angRange / 2;
@@ -431,7 +431,7 @@ function banSprite(sprite) {
 	var that = sprite;
 	setTimeout(function() {
 		that.remove();
-	}, 600);
+	}, BAN_DURATION_MS);
 }
 
 function touchJiki(sprite) {
@@ -484,7 +484,7 @@ function makeBossSh1(num) {
 	})
 	.start();
 
-	if ((num % 30) === 0 && stepFlg === 13) {
+	if ((num % 30) === 0 && stepFlg === STEP_BATTLE) {
 		new DGE.Sprite({
 			image : 'gfx/teki/60/s2.gif', width : 128, height : 2,
 			x : boss.x - 120, y : boss.y + 45, z : 2,

@@ -12,3 +12,4 @@
 | 01 | [標準に従う — ブラウザ独自構文の罠](01-standard-syntax.md) | `3adc166` |
 | 02 | [プロジェクトの構え方 — 名前・借り物・README](02-project-structure.md) | `77cdab0` |
 | 03 | [変数は宣言してから使う — 暗黙のグローバルという時限爆弾](03-declare-variables.md) | `5aef35d` |
+| 04 | [並行配列ではなく「1種類 = 1オブジェクト」](04-data-as-objects.md) | `288db7a` |

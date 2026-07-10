@@ -13,3 +13,5 @@
 | 02 | [プロジェクトの構え方 — 名前・借り物・README](02-project-structure.md) | `77cdab0` |
 | 03 | [変数は宣言してから使う — 暗黙のグローバルという時限爆弾](03-declare-variables.md) | `5aef35d` |
 | 04 | [並行配列ではなく「1種類 = 1オブジェクト」](04-data-as-objects.md) | `288db7a` |
+| 05 | [数えるなら対で数える — NaNになったカウンタ](05-counter-bug.md) | `d8855f6` |
+| 06 | [同じコードは一度だけ — ただし「たまたま似ている」は残す](06-deduplicate.md) | `fd079aa` |

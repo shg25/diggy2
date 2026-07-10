@@ -12,21 +12,21 @@ var STEP_WIN    = 14;
 var STEP_LOSE   = 19;
 
 function isPlay() {
-	if(stepFlg == STEP_READY || stepFlg == STEP_START || stepFlg == STEP_COME || stepFlg == STEP_BATTLE || stepFlg == STEP_WIN) {
+	if(stepFlg === STEP_READY || stepFlg === STEP_START || stepFlg === STEP_COME || stepFlg === STEP_BATTLE || stepFlg === STEP_WIN) {
 		return true;
 	}
 	return false;
 }
 
 function isFight() {
-	if(stepFlg == STEP_START || stepFlg == STEP_COME || stepFlg == STEP_BATTLE) {
+	if(stepFlg === STEP_START || stepFlg === STEP_COME || stepFlg === STEP_BATTLE) {
 		return true;
 	}
 	return false;
 }
 
 function isFightBoss() {
-	if(stepFlg == STEP_COME || stepFlg == STEP_BATTLE) {
+	if(stepFlg === STEP_COME || stepFlg === STEP_BATTLE) {
 		return true;
 	}
 	return false;
@@ -34,14 +34,14 @@ function isFightBoss() {
 
 function setStep(step) {
 	stepFlg = step;
-	if (step == STEP_TITLE) console.log('goTitle');
-	else if (step == STEP_RETURN) console.log('goReturn');
-	else if (step == STEP_READY) console.log('goReady');
-	else if (step == STEP_START) console.log('goStart');
-	else if (step == STEP_COME) console.log('goCome');
-	else if (step == STEP_BATTLE) console.log('goBattle');
-	else if (step == STEP_WIN) console.log('goWin');
-	else if (step == STEP_LOSE) console.log('goLose');
+	if (step === STEP_TITLE) console.log('goTitle');
+	else if (step === STEP_RETURN) console.log('goReturn');
+	else if (step === STEP_READY) console.log('goReady');
+	else if (step === STEP_START) console.log('goStart');
+	else if (step === STEP_COME) console.log('goCome');
+	else if (step === STEP_BATTLE) console.log('goBattle');
+	else if (step === STEP_WIN) console.log('goWin');
+	else if (step === STEP_LOSE) console.log('goLose');
 	else console.log('go????');
 }
 

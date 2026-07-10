@@ -28,9 +28,9 @@ function newTxtAlert(text) {
 
 function setTxtAlert(text, x, y, state) {
 	txtAlert.set('text', text);
-	if(state == STATE_SET) {
+	if(state === STATE_SET) {
 		txtAlert.plot(x, y);
-	}else if(state == STATE_SHOW) {
+	}else if(state === STATE_SHOW) {
 		txtAlert.plot(x, y).show();
 	}
 }

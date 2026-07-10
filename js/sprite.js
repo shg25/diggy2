@@ -95,6 +95,9 @@ function pushJikiShots(shots, num, def) {
 }
 
 function defineJikiSh() {
+	// ショットは使い回すプールなので、作るのは初回だけ。
+	// 毎ゲーム作り直すと、使われないスプライトが9個ずつ積もっていく
+	if (jikiSh1.length > 0) return;
 	pushJikiShots(jikiSh1, numJikiSh1, JIKI_SH_DEFS[0]);
 	pushJikiShots(jikiSh2, numJikiSh2, JIKI_SH_DEFS[1]);
 	pushJikiShots(jikiSh3, numJikiSh3, JIKI_SH_DEFS[2]);

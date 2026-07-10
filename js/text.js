@@ -10,6 +10,11 @@ var txtStage;
 var txtHiScore;
 
 function newTxtAlert(text) {
+	// 2回目以降は作り直さず、初回に作ったものを使い回す
+	if (txtAlert) {
+		setTxtAlert(text, 280, 160, STATE_SHOW);
+		return;
+	}
 	txtAlert = new DGE.Text({
 		font : FONT,
 		text : text,

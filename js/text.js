@@ -7,7 +7,6 @@ var FONT = 'verdana';
 var txtAlert;
 var txtScore;
 var txtStage;
-var txtHiScore;
 
 function newTxtAlert(text) {
 	// 2回目以降は作り直さず、初回に作ったものを使い回す
@@ -64,18 +63,3 @@ function newTxtStage(text) {
 		z : 3
 	});
 }
-
-// --------------------------------------------------
-
-function newTxtHiScore(text) {
-	txtHiScore = new DGE.Text({
-		font : FONT,
-		text : text,
-		width : 200,
-		height : 20,
-		x : 5,
-		y : 25,
-		z : 3
-	});
-}
-

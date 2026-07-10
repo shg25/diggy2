@@ -59,7 +59,6 @@ function init() {
 		'gfx/teki/61/l_1.gif', 'gfx/teki/61/l_2.gif', 'gfx/teki/61/l_3.gif'
 	]);
 	
-	// newTxtHiScore('Hi-Score: 0');
 	newTxtScore('Score: 0');
 	newTxtStage('STAGE 1');
 	newSpriteBg();

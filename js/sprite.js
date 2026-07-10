@@ -31,7 +31,6 @@ var bombTeki;
 
 var boss;
 var groupBossSh = 'groupBossSh';
-var numBossSh;
 
 // 2面ボスの暴れ状態(フレームをまたいで持ち越すのでファイルレベル)
 var bossTurn;
@@ -69,15 +68,12 @@ function newSpriteJiki() {
 		image : 'gfx/jiki/n.gif', width : 32, height : 32,
 		x : DGE.stage.width / 2 - 16, y : DGE.stage.height / 2 - 16, z : 2
 	});
-	// jiki.center().show();
 }
 
 function removeJiki() {
 	jiki.set('image', 'gfx/ban.gif');
-	// var that = jiki;
 	setTimeout(function() {
 		jiki.remove();
-		// jiki.hide();
 	}, BAN_DURATION_MS);
 }
 
@@ -126,8 +122,8 @@ function newSpriteBoss() {
 	})
 	.on('ping', function() {
 		if (!this.get('active')) return;
+		// 後方ショット(jikiSh2)はボスに当たらない仕様
 		hitJikiSh(this, 0, numJikiSh1, jikiSh1, 1);
-		// hitJikiSh(this, 0, numJikiSh2, jikiSh2, 1);
 		hitJikiSh(this, 1, numJikiSh3, jikiSh3, 0.2);
 		touchJiki(this);
 		
@@ -197,7 +193,6 @@ function newSpriteBoss() {
 			}
 		} else { // 1面のボスの動き
 			if (this.isOutOfBounds(true)) {
-				// numTeki--;
 				this.remove();
 				return;
 			}
@@ -277,7 +272,7 @@ function newSpriteBossSh2(num) {
 	var angBossSh = Math.atan2((jiki.get('y') - boss.get('y')) * -1, (jiki.get('x') - boss.get('x')) * -1) * 180 / Math.PI;
 
 	new DGE.Sprite({
-		image : 'gfx/teki/61/s' + (num) + '.gif', width : wBossSh, height : wBossSh,
+		image : 'gfx/teki/61/s' + (num) + '.gif', width : wBossSh, height : hBossSh,
 		x : boss.x + xBossSh, y : boss.y + yBossSh, z : 2,
 		velocity : def.velocity, angle : angBossSh,
 		life : 20,
@@ -286,7 +281,6 @@ function newSpriteBossSh2(num) {
 	.on('ping', function() {
 		if (!this.get('active')) return;
 		if (this.isOutOfBounds(true)) {
-			// numBossSh--;
 			this.remove();
 			return;
 		}
@@ -468,7 +462,7 @@ function makeBossSh1(num) {
 	}
 
 	new DGE.Sprite({
-		image : 'gfx/teki/60/s1.gif', width : wBossSh, height : wBossSh,
+		image : 'gfx/teki/60/s1.gif', width : wBossSh, height : hBossSh,
 		x : boss.x + xBossSh, y : boss.y + yBossSh, z : 2,
 		velocity : velBossSh, angle : angBossSh,
 		group : groupBossSh
@@ -476,7 +470,6 @@ function makeBossSh1(num) {
 	.on('ping', function() {
 		if (!this.get('active')) return;
 		if (this.isOutOfBounds(true)) {
-			// numBossSh--;
 			this.remove();
 			return;
 		}
@@ -494,7 +487,6 @@ function makeBossSh1(num) {
 		.on('ping', function() {
 			if (!this.get('active')) return;
 			if (this.isOutOfBounds(true)) {
-				// numBossSh--;
 				this.remove();
 				return;
 			}

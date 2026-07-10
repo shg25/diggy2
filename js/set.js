@@ -1,3 +1,5 @@
+'use strict';
+
 // ショット変更
 function chJikiSh() {
 	if (jikiShFlg != 3) jikiShFlg += 1;

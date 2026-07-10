@@ -1,9 +1,12 @@
+'use strict';
+
 var STATE_SET = 0;
 var STATE_SHOW = 1;
 
 var FONT = 'verdana';
 var txtAlert;
 var txtScore;
+var txtStage;
 var txtHiScore;
 
 function newTxtAlert(text) {

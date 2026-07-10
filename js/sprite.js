@@ -1,3 +1,5 @@
+'use strict';
+
 var bg;
 var logo;
 
@@ -18,6 +20,7 @@ var velJikiSh3 = 6;
 
 var groupTeki = 'groupTeki';
 var numTeki;
+var teki2; // 2面の敵(とぅと郎)。1体だけなので使い回す
 
 var groupPwr = 'groupPwr';
 var bombTeki;
@@ -25,6 +28,12 @@ var bombTeki;
 var boss;
 var groupBossSh = 'groupBossSh';
 var numBossSh;
+
+// 2面ボスの暴れ状態(フレームをまたいで持ち越すのでファイルレベル)
+var bossTurn;
+var bossTurnMode;
+// 2面ボス追尾弾の状態(本当は弾ごとに持つべきだが、当時の挙動を維持)
+var turn;
 
 // --------------------------------------------------
 
@@ -104,13 +113,14 @@ function defineJikiSh() {
 // --------------------
 
 function newSpriteBoss() {
-	angBoss = new Array(170, 0);
-	velBoss = new Array(1, 10);
-	wBoss = new Array(278, 222);
-	hBoss = new Array(65, 120);
-	xBoss = new Array(-277, 599);
-	yBoss = new Array(300, 270);
+	var angBoss = new Array(170, 0);
+	var velBoss = new Array(1, 10);
+	var wBoss = new Array(278, 222);
+	var hBoss = new Array(65, 120);
+	var xBoss = new Array(-277, 599);
+	var yBoss = new Array(300, 270);
 
+	var n;
 	if (stageFlg != 1) n = 1;
 	else n = 0;
 	
@@ -263,12 +273,12 @@ function moveTeki2() {
 
 //2面のボス弾
 function newSpriteBossSh2(num) {
-	velBossSh = new Array(10, 5);
-	wBossSh = 16;
-	hBossSh = 16;
-	xBossSh = 60;
-	yBossSh = 60;
-	angBossSh = Math.atan2((jiki.get('y') - boss.get('y')) * -1, (jiki.get('x') - boss.get('x')) * -1) * 180 / Math.PI;
+	var velBossSh = new Array(10, 5);
+	var wBossSh = 16;
+	var hBossSh = 16;
+	var xBossSh = 60;
+	var yBossSh = 60;
+	var angBossSh = Math.atan2((jiki.get('y') - boss.get('y')) * -1, (jiki.get('x') - boss.get('x')) * -1) * 180 / Math.PI;
 
 	new DGE.Sprite({
 		image : 'gfx/teki/61/s' + (num) + '.gif', width : wBossSh, height : wBossSh,
@@ -304,12 +314,13 @@ function newSpriteBossSh2(num) {
 
 //パワーアップアイテム
 function makePwr() {
-	velTeki = new Array(5, 5, 10);
-	wTeki = new Array(24, 16, 16);
-	hTeki = new Array(16, 24, 17);
+	var velTeki = new Array(5, 5, 10);
+	var wTeki = new Array(24, 16, 16);
+	var hTeki = new Array(16, 24, 17);
 
-	n = Math.floor(Math.random() * 3);
-	lr = Math.floor(Math.random() * 2);
+	var n = Math.floor(Math.random() * 3);
+	var lr = Math.floor(Math.random() * 2);
+	var xTeki;
 	if (lr == 0) {
 		xTeki = DGE.stage.width;
 	} else {
@@ -338,15 +349,17 @@ function makePwr() {
 // --------------------------------------------------
 // 1面の敵機作る
 function makeTeki1() {
-	angTeki = new Array(Math.floor(Math.random() * 30) - 15, 0, Math.floor(Math.random() * 160) - 80, Math.floor(Math.random() * 90) - 45);
-	velTeki = new Array(5, 10, 3, 8);
-	lifeTeki = new Array(2, 4, 3, 2);
-	scoreTeki = new Array(50, 1000, 100, 250);
-	wTeki = new Array(16, 16, 16, 16);
-	hTeki = new Array(16, 16, 16, 16);
-	
-	n = Math.floor(Math.random() * 4);
-	lr = Math.floor(Math.random() * 2);
+	var angTeki = new Array(Math.floor(Math.random() * 30) - 15, 0, Math.floor(Math.random() * 160) - 80, Math.floor(Math.random() * 90) - 45);
+	var velTeki = new Array(5, 10, 3, 8);
+	var lifeTeki = new Array(2, 4, 3, 2);
+	var scoreTeki = new Array(50, 1000, 100, 250);
+	var wTeki = new Array(16, 16, 16, 16);
+	var hTeki = new Array(16, 16, 16, 16);
+
+	var n = Math.floor(Math.random() * 4);
+	var lr = Math.floor(Math.random() * 2);
+	var lrTeki;
+	var xTeki;
 	if (lr == 0) {
 		lrTeki = 'l';
 		xTeki = DGE.stage.width;
@@ -429,10 +442,13 @@ function touchJiki(sprite) {
 // --------------------------------------------------
 // 1面のボス弾
 function makeBossSh1(num) {
-	velBossSh = 2;
-	wBossSh = 4;
-	hBossSh = 4;
+	var velBossSh = 2;
+	var wBossSh = 4;
+	var hBossSh = 4;
 
+	var angBossSh;
+	var xBossSh;
+	var yBossSh;
 	if ((num % 2) == 0) {
 		angBossSh = (num) * 10;
 		xBossSh = 65;
@@ -447,7 +463,7 @@ function makeBossSh1(num) {
 		image : 'gfx/teki/60/s1.gif', width : wBossSh, height : wBossSh,
 		x : boss.x + xBossSh, y : boss.y + yBossSh, z : 2,
 		velocity : velBossSh, angle : angBossSh,
-		n : n, group : groupBossSh
+		group : groupBossSh
 	})
 	.on('ping', function() {
 		if (!this.get('active')) return;
@@ -465,7 +481,7 @@ function makeBossSh1(num) {
 			image : 'gfx/teki/60/s2.gif', width : 128, height : 2,
 			x : boss.x - 120, y : boss.y + 45, z : 2,
 			velocity : 4, angle : 10,
-			n : n, group : groupBossSh
+			group : groupBossSh
 		})
 		.on('ping', function() {
 			if (!this.get('active')) return;

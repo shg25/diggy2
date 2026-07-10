@@ -1,3 +1,5 @@
+'use strict';
+
 var keyboard;
 var counter = 0;
 var stageFlg = 1;

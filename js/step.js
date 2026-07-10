@@ -1,3 +1,5 @@
+'use strict';
+
 var stepFlg = 0;
 
 var STEP_TITLE  = 0;

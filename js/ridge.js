@@ -1,3 +1,5 @@
+'use strict';
+
 (function() {
 	init();
 	DGE.Keyboard.on('keyDown', keyDown);

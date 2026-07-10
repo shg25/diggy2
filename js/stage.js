@@ -1,3 +1,5 @@
+'use strict';
+
 var moveJiki = new DGE.Interval({
 	delay : DGE.Interval.formatFPS(30),
 	interval : function() {

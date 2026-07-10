@@ -14,9 +14,13 @@ var jikiSh3 = [];
 var numJikiSh1 = 3;
 var numJikiSh2 = 3;
 var numJikiSh3 = 3;
-var velJikiSh1 = 16;
-var velJikiSh2 = 16;
-var velJikiSh3 = 6;
+
+// 自機ショット定義 [0]:前 [1]:後 [2]:レーザー
+var JIKI_SH_DEFS = [
+	{ image : 'gfx/jiki/s1.gif', width : 8,  height : 8, velocity : 16, angle : 180 },
+	{ image : 'gfx/jiki/s1.gif', width : 8,  height : 8, velocity : 16, angle : 0 },
+	{ image : 'gfx/jiki/s3.gif', width : 16, height : 8, velocity : 6,  angle : 180 }
+];
 
 var groupTeki = 'groupTeki';
 var numTeki = 0; // 1面の雑魚敵の数(湧きで++、画面外/撃破で--)
@@ -77,37 +81,23 @@ function removeJiki() {
 	}, 600);
 }
 
+function pushJikiShots(shots, num, def) {
+	for (var i = 0; i < num; i++) {
+		shots.push(new DGE.Sprite({
+			image : def.image, width : def.width, height : def.height,
+			velocity : def.velocity, angle : def.angle
+		})
+		.on('ping', function() {
+			if (this.isOutOfBounds(true)) this.hide().stop();
+		})
+		.hide());
+	}
+}
+
 function defineJikiSh() {
-	for (var i = 0; i < numJikiSh1; i++) {
-		jikiSh1.push(new DGE.Sprite({
-			image : 'gfx/jiki/s1.gif', width : 8, height : 8,
-			velocity : velJikiSh1, angle : 180
-		})
-		.on('ping', function() {
-			if (this.isOutOfBounds(true)) this.hide().stop();
-		})
-		.hide());
-	}
-	for (var i = 0; i < numJikiSh2; i++) {
-		jikiSh2.push(new DGE.Sprite({
-			image : 'gfx/jiki/s1.gif', width : 8, height : 8,
-			velocity : velJikiSh2, angle : 0
-		})
-		.on('ping', function() {
-			if (this.isOutOfBounds(true)) this.hide().stop();
-		})
-		.hide());
-	}
-	for (var i = 0; i < numJikiSh3; i++) {
-		jikiSh3.push(new DGE.Sprite({
-			image : 'gfx/jiki/s3.gif', width : 16, height : 8,
-			velocity : velJikiSh3, angle : 180
-		})
-		.on('ping', function() {
-			if (this.isOutOfBounds(true)) this.hide().stop();
-		})
-		.hide());
-	}
+	pushJikiShots(jikiSh1, numJikiSh1, JIKI_SH_DEFS[0]);
+	pushJikiShots(jikiSh2, numJikiSh2, JIKI_SH_DEFS[1]);
+	pushJikiShots(jikiSh3, numJikiSh3, JIKI_SH_DEFS[2]);
 }
 
 // --------------------
@@ -245,9 +235,7 @@ function newSpriteTeki2() {
 			this.remove();
 			return;
 		}
-		hitJikiSh(this, 0, numJikiSh1, jikiSh1, 1);
-		hitJikiSh(this, 0, numJikiSh2, jikiSh2, 1);
-		hitJikiSh(this, 1, numJikiSh3, jikiSh3, 0.8);
+		hitAllJikiSh(this, 0.8);
 		touchJiki(this);
 	})
 	.start();
@@ -396,9 +384,7 @@ function makeTeki1() {
 			return;
 		}
 		if (bombTeki == 1) banSprite(this);
-		hitJikiSh(this, 0, numJikiSh1, jikiSh1, 1);
-		hitJikiSh(this, 0, numJikiSh2, jikiSh2, 1);
-		hitJikiSh(this, 1, numJikiSh3, jikiSh3, 0.8);
+		hitAllJikiSh(this, 0.8);
 		touchJiki(this);
 		
 		// 上下端で角度速度を鋭利に
@@ -410,6 +396,13 @@ function makeTeki1() {
 	})
 	.start();
 };
+
+// 雑魚敵と自機全ショットの当たり判定(レーザーだけ貫通するのでダメージ倍率が別)
+function hitAllJikiSh(sprite, laserDamage) {
+	hitJikiSh(sprite, 0, numJikiSh1, jikiSh1, 1);
+	hitJikiSh(sprite, 0, numJikiSh2, jikiSh2, 1);
+	hitJikiSh(sprite, 1, numJikiSh3, jikiSh3, laserDamage);
+}
 
 function hitJikiSh(sprite, type, num, jikiSh, damage) {
 	for (var i = 0; i < num; i++) {

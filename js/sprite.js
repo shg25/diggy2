@@ -112,22 +112,22 @@ function defineJikiSh() {
 
 // --------------------
 
-function newSpriteBoss() {
-	var angBoss = new Array(170, 0);
-	var velBoss = new Array(1, 10);
-	var wBoss = new Array(278, 222);
-	var hBoss = new Array(65, 120);
-	var xBoss = new Array(-277, 599);
-	var yBoss = new Array(300, 270);
+// ボス定義 [0]:1面 [1]:2面(猫バス)
+var BOSS_DEFS = [
+	{ width : 278, height : 65,  x : -277, y : 300, velocity : 1,  angle : 170 },
+	{ width : 222, height : 120, x : 599,  y : 270, velocity : 10, angle : 0 }
+];
 
+function newSpriteBoss() {
 	var n;
 	if (stageFlg != 1) n = 1;
 	else n = 0;
-	
+	var def = BOSS_DEFS[n];
+
 	boss = new DGE.Sprite({
-		image : 'gfx/teki/' + (n + 60) + '/l.gif', width : wBoss[n], height : hBoss[n],
-		x : xBoss[n], y : yBoss[n], z : 2,
-		velocity : velBoss[n], angle : angBoss[n],
+		image : 'gfx/teki/' + (n + 60) + '/l.gif', width : def.width, height : def.height,
+		x : def.x, y : def.y, z : 2,
+		velocity : def.velocity, angle : def.angle,
 		life : 20, score : 5000,
 		n : n, tag : 'boss'
 	})
@@ -271,9 +271,14 @@ function moveTeki2() {
 
 // --------------------------------------------------
 
-//2面のボス弾
+//2面のボス弾 [0]:直進弾 [1]:追尾弾
+var BOSS_SH2_DEFS = [
+	{ velocity : 10 },
+	{ velocity : 5 }
+];
+
 function newSpriteBossSh2(num) {
-	var velBossSh = new Array(10, 5);
+	var def = BOSS_SH2_DEFS[num];
 	var wBossSh = 16;
 	var hBossSh = 16;
 	var xBossSh = 60;
@@ -283,7 +288,7 @@ function newSpriteBossSh2(num) {
 	new DGE.Sprite({
 		image : 'gfx/teki/61/s' + (num) + '.gif', width : wBossSh, height : wBossSh,
 		x : boss.x + xBossSh, y : boss.y + yBossSh, z : 2,
-		velocity : velBossSh[num], angle : angBossSh,
+		velocity : def.velocity, angle : angBossSh,
 		life : 20,
 		n : num, group : groupBossSh
 	})
@@ -312,26 +317,30 @@ function newSpriteBossSh2(num) {
 
 //--------------------------------------------------
 
-//パワーアップアイテム
-function makePwr() {
-	var velTeki = new Array(5, 5, 10);
-	var wTeki = new Array(24, 16, 16);
-	var hTeki = new Array(16, 24, 17);
+//パワーアップアイテム [0]:ショット変更 [1]:スピード変更 [2]:ボム
+var PWR_DEFS = [
+	{ width : 24, height : 16, velocity : 5 },
+	{ width : 16, height : 24, velocity : 5 },
+	{ width : 16, height : 17, velocity : 10 }
+];
 
+function makePwr() {
 	var n = Math.floor(Math.random() * 3);
+	var def = PWR_DEFS[n];
+	var velocity = def.velocity;
 	var lr = Math.floor(Math.random() * 2);
 	var xTeki;
 	if (lr == 0) {
 		xTeki = DGE.stage.width;
 	} else {
 		xTeki = -16;
-		velTeki[n] = velTeki[n] * -0.4;
+		velocity = velocity * -0.4;
 	}
 
 	new DGE.Sprite({
-		image : 'gfx/teki/' + (n + 80) + '/l.gif', width : wTeki[n], height : hTeki[n],
+		image : 'gfx/teki/' + (n + 80) + '/l.gif', width : def.width, height : def.height,
 		x : xTeki, y : DGE.rand(jiki.height, (DGE.stage.height - 100)), z : 2,
-		velocity : velTeki[n],
+		velocity : velocity,
 		n : n, group : groupPwr
 	})
 	.on('ping', function() {
@@ -347,16 +356,20 @@ function makePwr() {
 };
 
 // --------------------------------------------------
+// 1面の雑魚敵定義 (angRange: 進行角のブレ幅。角度は ±angRange/2 の範囲でランダム)
+var TEKI1_DEFS = [
+	{ width : 16, height : 16, velocity : 5,  life : 2, score : 50,   angRange : 30 },
+	{ width : 16, height : 16, velocity : 10, life : 4, score : 1000, angRange : 0 },
+	{ width : 16, height : 16, velocity : 3,  life : 3, score : 100,  angRange : 160 },
+	{ width : 16, height : 16, velocity : 8,  life : 2, score : 250,  angRange : 90 }
+];
+
 // 1面の敵機作る
 function makeTeki1() {
-	var angTeki = new Array(Math.floor(Math.random() * 30) - 15, 0, Math.floor(Math.random() * 160) - 80, Math.floor(Math.random() * 90) - 45);
-	var velTeki = new Array(5, 10, 3, 8);
-	var lifeTeki = new Array(2, 4, 3, 2);
-	var scoreTeki = new Array(50, 1000, 100, 250);
-	var wTeki = new Array(16, 16, 16, 16);
-	var hTeki = new Array(16, 16, 16, 16);
-
 	var n = Math.floor(Math.random() * 4);
+	var def = TEKI1_DEFS[n];
+	var velocity = def.velocity;
+	var angle = Math.floor(Math.random() * def.angRange) - def.angRange / 2;
 	var lr = Math.floor(Math.random() * 2);
 	var lrTeki;
 	var xTeki;
@@ -366,14 +379,14 @@ function makeTeki1() {
 	} else {
 		lrTeki = 'r';
 		xTeki = -16;
-		velTeki[n] = velTeki[n] * -0.4;
+		velocity = velocity * -0.4;
 	}
-	
+
 	new DGE.Sprite({
-		image : 'gfx/teki/' + n + '/' + lrTeki + '.gif', width : wTeki[n], height : hTeki[n],
+		image : 'gfx/teki/' + n + '/' + lrTeki + '.gif', width : def.width, height : def.height,
 		x : xTeki, y : DGE.rand(jiki.height, (DGE.stage.height - 100)), z : 2,
-		velocity : velTeki[n], angle : angTeki[n],
-		life : lifeTeki[n], score : scoreTeki[n],
+		velocity : velocity, angle : angle,
+		life : def.life, score : def.score,
 		n : n, group : groupTeki
 	})
 	.on('ping', function() {

@@ -1,6 +1,6 @@
 # レッスン18: 型は仕様書 — JSDoc + TypeScript チェッカー
 
-対応コミット: (TBD)
+対応コミット: `8513e88`
 
 ## ビルドしないTypeScript
 

@@ -26,4 +26,4 @@
 | 15 | [検証を資産に — テストコード](15-tests.md) | `e498497` |
 | 16 | [自動化の門番 — git hooks と CI](16-automation.md) | `d5ada19` |
 | 17 | [見た目の議論を終わらせる — Prettier](17-formatter.md) | `bb2b735` |
-| 18 | [型は仕様書 — JSDoc + TypeScript チェッカー](18-types.md) | (このコミット) |
+| 18 | [型は仕様書 — JSDoc + TypeScript チェッカー](18-types.md) | `8513e88` |

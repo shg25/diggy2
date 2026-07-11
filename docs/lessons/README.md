@@ -22,3 +22,4 @@
 | 11 | [部屋に仕切りを — ES modules への移行](11-es-modules.md) | `fdb0a63` |
 | 12 | [見張りを機械に任せる — ESLint導入](12-eslint.md) | `6134128` |
 | 13 | [var にさよなら — let/const と「変わらない」という情報](13-let-const.md) | `df454d2` |
+| 14 | [依存は一方通行に — レイヤー分けと依存性逆転](14-layering.md) | `2c95d4f` |

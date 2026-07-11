@@ -1,5 +1,7 @@
 # RIDGE部
 
+[![CI](https://github.com/shg25/diggy2/actions/workflows/ci.yml/badge.svg)](https://github.com/shg25/diggy2/actions/workflows/ci.yml)
+
 昔、友人と作った横スクロールシューティングゲーム。
 DHTML（DOM要素を動かして描画する）ゲームエンジン [Diggy](lib/diggy/) の上で動く。
 
@@ -23,6 +25,8 @@ python3 -m http.server 8720
 ```sh
 npm install       # 開発ツールのインストール
 npm run lint      # コード検査(ESLint)
+npm run typecheck # 型検査(JSDoc + tsc)
+npm run format    # 整形(Prettier)
 npm test          # 単体テスト(状態機械・ミリ秒で完了)
 npm run test:e2e  # 回帰テスト(ヘッドレスChromeで実ゲームを遊ぶ・約2分)
 ```

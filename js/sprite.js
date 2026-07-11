@@ -77,7 +77,7 @@ export function removeJiki() {
 }
 
 function pushJikiShots(shots, num, def) {
-	for (var i = 0; i < num; i++) {
+	for (let i = 0; i < num; i++) {
 		shots.push(new DGE.Sprite({
 			image : def.image, width : def.width, height : def.height,
 			velocity : def.velocity, angle : def.angle
@@ -107,10 +107,10 @@ const BOSS_DEFS = [
 ];
 
 export function newSpriteBoss() {
-	var n;
+	let n;
 	if (state.stageFlg !== 1) n = 1;
 	else n = 0;
-	var def = BOSS_DEFS[n];
+	const def = BOSS_DEFS[n];
 
 	boss = new DGE.Sprite({
 		image : 'gfx/teki/' + (n + 60) + '/l.gif', width : def.width, height : def.height,
@@ -263,12 +263,12 @@ const BOSS_SH2_DEFS = [
 ];
 
 export function newSpriteBossSh2(num) {
-	var def = BOSS_SH2_DEFS[num];
-	var wBossSh = 16;
-	var hBossSh = 16;
-	var xBossSh = 60;
-	var yBossSh = 60;
-	var angBossSh = Math.atan2((jiki.get('y') - boss.get('y')) * -1, (jiki.get('x') - boss.get('x')) * -1) * 180 / Math.PI;
+	const def = BOSS_SH2_DEFS[num];
+	const wBossSh = 16;
+	const hBossSh = 16;
+	const xBossSh = 60;
+	const yBossSh = 60;
+	const angBossSh = Math.atan2((jiki.get('y') - boss.get('y')) * -1, (jiki.get('x') - boss.get('x')) * -1) * 180 / Math.PI;
 
 	new DGE.Sprite({
 		image : 'gfx/teki/61/s' + (num) + '.gif', width : wBossSh, height : hBossSh,
@@ -309,11 +309,11 @@ const PWR_DEFS = [
 ];
 
 export function makePwr() {
-	var n = Math.floor(Math.random() * PWR_DEFS.length);
-	var def = PWR_DEFS[n];
-	var velocity = def.velocity;
-	var lr = Math.floor(Math.random() * 2);
-	var xTeki;
+	const n = Math.floor(Math.random() * PWR_DEFS.length);
+	const def = PWR_DEFS[n];
+	let velocity = def.velocity;
+	const lr = Math.floor(Math.random() * 2);
+	let xTeki;
 	if (lr === 0) {
 		xTeki = DGE.stage.width;
 	} else {
@@ -349,13 +349,13 @@ const TEKI1_DEFS = [
 
 // 1面の敵機作る
 export function makeTeki1() {
-	var n = Math.floor(Math.random() * TEKI1_DEFS.length);
-	var def = TEKI1_DEFS[n];
-	var velocity = def.velocity;
-	var angle = Math.floor(Math.random() * def.angRange) - def.angRange / 2;
-	var lr = Math.floor(Math.random() * 2);
-	var lrTeki;
-	var xTeki;
+	const n = Math.floor(Math.random() * TEKI1_DEFS.length);
+	const def = TEKI1_DEFS[n];
+	let velocity = def.velocity;
+	const angle = Math.floor(Math.random() * def.angRange) - def.angRange / 2;
+	const lr = Math.floor(Math.random() * 2);
+	let lrTeki;
+	let xTeki;
 	if (lr === 0) {
 		lrTeki = 'l';
 		xTeki = DGE.stage.width;
@@ -401,7 +401,7 @@ function hitAllJikiSh(sprite, laserDamage) {
 }
 
 function hitJikiSh(sprite, type, num, jikiSh, damage) {
-	for (var i = 0; i < num; i++) {
+	for (let i = 0; i < num; i++) {
 		if (jikiSh[i].get('active') && sprite.isTouching(jikiSh[i])) {
 			sprite.set('life', sprite.get('life') - damage);
 			if(type === 1){ // レーザー
@@ -421,9 +421,8 @@ function banSprite(sprite) {
 	setTxtScore(sprite.get('score'));
 	sprite.stop();
 	sprite.set('image', 'gfx/ban.gif');
-	var that = sprite;
 	setTimeout(function() {
-		that.remove();
+		sprite.remove();
 	}, BAN_DURATION_MS);
 }
 
@@ -444,13 +443,13 @@ function touchJiki(sprite) {
 // --------------------------------------------------
 // 1面のボス弾
 export function makeBossSh1(num) {
-	var velBossSh = 2;
-	var wBossSh = 4;
-	var hBossSh = 4;
+	const velBossSh = 2;
+	const wBossSh = 4;
+	const hBossSh = 4;
 
-	var angBossSh;
-	var xBossSh;
-	var yBossSh;
+	let angBossSh;
+	let xBossSh;
+	let yBossSh;
 	if ((num % 2) === 0) {
 		angBossSh = (num) * 10;
 		xBossSh = 65;

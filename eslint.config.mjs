@@ -19,7 +19,10 @@ export default [
 		},
 		rules: {
 			// レッスン08「比較は厳密に」を機械に見張らせる
-			eqeqeq: 'error'
+			eqeqeq: 'error',
+			// レッスン13「varにさよなら」を機械に見張らせる
+			'no-var': 'error',
+			'prefer-const': 'error'
 		}
 	}
 ];

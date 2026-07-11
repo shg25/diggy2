@@ -41,7 +41,7 @@ function makeJikiSh() {
 }
 
 function shotJikiSh(type, num) {
-	for (var i = 0; i < num; i++) {
+	for (let i = 0; i < num; i++) {
 		if(type === 1) {
 			if (!jikiSh1[i].get('active')) {
 				startJikiSh(jikiSh1[i], 1);
@@ -54,7 +54,7 @@ function shotJikiSh(type, num) {
 			}
 		} else if(type === 3) {
 			if (!jikiSh3[i].get('active') && !jikiSh3[i + 1].get('active') && !jikiSh3[i + 2].get('active')) {
-				for (var n = 0; n < numJikiSh3; n++) {
+				for (let n = 0; n < numJikiSh3; n++) {
 					jikiSh3[i + n].set('angle', 150 + 30 * n);
 					startJikiSh(jikiSh3[i + n], 3);
 				}
@@ -82,9 +82,9 @@ export function eventKeyDown(keyCode) {
 		if (isPlay()) makeJikiSh();
 	}
 
-	var KEYCODE_S = 83;
-	var KEYCODE_Z = 90;
-	var KEYCODE_B = 66;
+	const KEYCODE_S = 83;
+	const KEYCODE_Z = 90;
+	const KEYCODE_B = 66;
 
 	if (keyCode === KEYCODE_S) {
 		if (stepFlg === STEP_TITLE) changeStage();

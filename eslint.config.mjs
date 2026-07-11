@@ -3,12 +3,12 @@ import globals from 'globals';
 
 export default [
 	// エンジンは借り物なので検査しない
-	{ ignores: ['lib/', 'node_modules/'] },
+	{ ignores: ['classic/lib/', 'node_modules/'] },
 
 	js.configs.recommended,
 
 	{
-		files: ['js/**/*.js'],
+		files: ['classic/js/**/*.js'],
 		languageOptions: {
 			ecmaVersion: 2022,
 			sourceType: 'module',

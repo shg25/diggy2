@@ -8,5 +8,5 @@
 		"module": "nodenext",
 		"moduleResolution": "nodenext"
 	},
-	"include": ["js/**/*.js", "types/**/*.d.ts"]
+	"include": ["classic/js/**/*.js", "classic/types/**/*.d.ts"]
 }

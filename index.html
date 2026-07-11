@@ -1,35 +1,118 @@
-﻿<!doctype html>
-<html>
+<!doctype html>
+<html lang="ja">
 	<head>
-		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-		<!-- faviconはまだ無い。data:で空を指定して毎回の404を止める -->
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link rel="icon" href="data:," />
+		<title>RIDGE部 / JIB-FREEK MOBILE</title>
 		<style>
 			body {
-				background: #fff;
+				margin: 0;
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: linear-gradient(#000 0%, #0a1a4a 70%, #1a0e00 100%);
+				color: #fff;
+				font-family: Verdana, sans-serif;
+			}
+			main {
+				text-align: center;
+				padding: 2rem;
+			}
+			h1 {
+				font-size: 1rem;
+				font-weight: normal;
+				letter-spacing: 0.3em;
+				color: #8899cc;
+				margin-bottom: 3rem;
+			}
+			.games {
+				display: flex;
+				gap: 2rem;
+				flex-wrap: wrap;
+				justify-content: center;
+			}
+			.game {
+				display: block;
+				width: 240px;
+				padding: 2rem 1.5rem;
+				border: 1px solid #445;
+				border-radius: 8px;
+				text-decoration: none;
+				color: inherit;
+				background: rgba(255, 255, 255, 0.04);
+			}
+			a.game:hover {
+				border-color: #d33;
+				background: rgba(255, 255, 255, 0.08);
+			}
+			.game h2 {
+				margin: 0 0 0.75rem;
+				font-size: 1.4rem;
+			}
+			.classic h2 {
+				color: #d33;
+			}
+			.new h2 {
+				color: #3c9;
+			}
+			.game p {
+				margin: 0;
+				font-size: 0.8rem;
+				line-height: 1.7;
+				color: #aab;
+			}
+			.soon {
+				opacity: 0.55;
+			}
+			.badge {
+				display: inline-block;
+				margin-top: 1rem;
+				font-size: 0.7rem;
+				letter-spacing: 0.15em;
+				padding: 0.2rem 0.7rem;
+				border: 1px solid #667;
+				border-radius: 999px;
+				color: #99a;
+			}
+			footer {
+				margin-top: 3rem;
+				font-size: 0.7rem;
+				color: #667;
+			}
+			footer a {
+				color: #889;
 			}
 		</style>
-		<title>RIDGE部</title>
 	</head>
 	<body>
-		<div id="screen"></div>
-
-		<script src="lib/diggy/core/dge.js"></script>
-		<script src="lib/diggy/core/patches.js"></script>
-		<script src="lib/diggy/core/object.js"></script>
-		<script src="lib/diggy/core/data.js"></script>
-		<script src="lib/diggy/core/interval.js"></script>
-		<script src="lib/diggy/core/keyboard.js"></script>
-		<script src="lib/diggy/core/loader.js"></script>
-		<script src="lib/diggy/core/audio.js"></script>
-		<script src="lib/diggy/core/sprite.js"></script>
-		<script src="lib/diggy/core/text.js"></script>
-		<script src="lib/diggy/plugins/bbcode.js"></script>
-		<script src="lib/diggy/core/xhr.js"></script>
-		<script src="lib/diggy/core/mouse.js"></script>
-
-		<!-- ゲーム本体はES modules。エントリポイントだけ読み込めば、
-     依存関係(import)をブラウザが辿って全ファイルを正しい順で読む -->
-		<script type="module" src="js/ridge.js"></script>
+		<main>
+			<h1>SHOOTING GAMES</h1>
+			<div class="games">
+				<a class="game classic" href="classic/">
+					<h2>RIDGE部</h2>
+					<p>
+						20年前に友人と作った横スクロールシューティング。<br />
+						ゲームは当時のまま、コードだけ現代化した保存版。
+					</p>
+					<span class="badge">CLASSIC</span>
+				</a>
+				<div class="game new soon">
+					<h2>JIB-FREEK MOBILE</h2>
+					<p>
+						同じ素材で、エンジンから作り直す新版。<br />
+						新機能を積んで進化していく。
+					</p>
+					<span class="badge">COMING SOON</span>
+				</div>
+			</div>
+			<footer>
+				<a href="https://github.com/shg25/diggy2">GitHub</a> ·
+				<a href="https://github.com/shg25/diggy2/tree/main/docs/lessons"
+					>リファクタの記録(全レッスン)</a
+				>
+			</footer>
+		</main>
 	</body>
 </html>

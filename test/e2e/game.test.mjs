@@ -10,7 +10,7 @@ import { spawn } from 'node:child_process';
 import { chromium } from 'playwright-core';
 
 const PORT = 8765;
-const GAME_URL = `http://localhost:${PORT}/index.html`;
+const GAME_URL = `http://localhost:${PORT}/classic/index.html`;
 const REPO_ROOT = new URL('../..', import.meta.url).pathname;
 
 let server;

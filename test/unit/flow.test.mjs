@@ -19,7 +19,7 @@ import {
 	isFight,
 	isFightBoss,
 	transitions,
-} from '../../js/flow.js';
+} from '../../classic/js/flow.js';
 
 test('初期状態はタイトル', () => {
 	assert.equal(stepFlg, STEP_TITLE);

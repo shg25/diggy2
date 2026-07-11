@@ -8,7 +8,7 @@ export default [
 	js.configs.recommended,
 
 	{
-		files: ['classic/js/**/*.js'],
+		files: ['classic/js/**/*.js', 'jibfreak/js/**/*.js'],
 		languageOptions: {
 			ecmaVersion: 2022,
 			sourceType: 'module',

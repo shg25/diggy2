@@ -12,6 +12,7 @@ export const STEP_LOSE = 19;
 
 export let stepFlg = 0;
 
+/** @param {number} step 遷移先(STEP_*定数) */
 export function setStep(step) {
 	stepFlg = step;
 	if (step === STEP_TITLE) console.log('goTitle');

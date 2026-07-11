@@ -2,10 +2,11 @@ export const STATE_SET = 0;
 export const STATE_SHOW = 1;
 
 const FONT = 'verdana';
-export let txtAlert;
-export let txtScore;
-export let txtStage;
+/** @type {DGESprite} */ export let txtAlert;
+/** @type {DGESprite} */ export let txtScore;
+/** @type {DGESprite} */ export let txtStage;
 
+/** @param {string} text */
 export function newTxtAlert(text) {
 	// 2回目以降は作り直さず、初回に作ったものを使い回す
 	if (txtAlert) {
@@ -23,6 +24,12 @@ export function newTxtAlert(text) {
 	});
 }
 
+/**
+ * @param {string} text
+ * @param {number} x
+ * @param {number} y
+ * @param {number} state STATE_SET | STATE_SHOW
+ */
 export function setTxtAlert(text, x, y, state) {
 	txtAlert.set('text', text);
 	if (state === STATE_SET) {
@@ -34,6 +41,7 @@ export function setTxtAlert(text, x, y, state) {
 
 // --------------------------------------------------
 
+/** @param {string} text */
 export function newTxtScore(text) {
 	txtScore = new DGE.Text({
 		font: FONT,
@@ -47,6 +55,7 @@ export function newTxtScore(text) {
 	});
 }
 
+/** @param {number} i 加算する点数(負数で減算) */
 export function setTxtScore(i) {
 	txtScore.set('points', txtScore.get('points') + i);
 	txtScore.set('text', DGE.sprintf('Score: %s', DGE.formatNumber(txtScore.get('points'))));
@@ -54,6 +63,7 @@ export function setTxtScore(i) {
 
 // --------------------------------------------------
 
+/** @param {string} text */
 export function newTxtStage(text) {
 	txtStage = new DGE.Text({
 		font: FONT,

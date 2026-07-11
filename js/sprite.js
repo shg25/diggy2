@@ -3,14 +3,14 @@ import { state } from './state.js';
 import { setTxtScore } from './text.js';
 import { STEP_COME, STEP_BATTLE, stepFlg, isFight, transitions } from './flow.js';
 
-export let logo;
+/** @type {DGESprite} */ export let logo;
 
-export let jiki;
+/** @type {DGESprite} */ export let jiki;
 
 // 自機ショット 1:シングル 2:ダブル 3:レーザー
-export const jikiSh1 = [];
-export const jikiSh2 = [];
-export const jikiSh3 = [];
+/** @type {DGESprite[]} */ export const jikiSh1 = [];
+/** @type {DGESprite[]} */ export const jikiSh2 = [];
+/** @type {DGESprite[]} */ export const jikiSh3 = [];
 export const numJikiSh1 = 3;
 export const numJikiSh2 = 3;
 export const numJikiSh3 = 3;
@@ -23,17 +23,20 @@ const JIKI_SH_DEFS = [
 ];
 
 const groupTeki = 'groupTeki';
-export let teki2; // 2面の敵(とぅと郎)。1体だけなので使い回す
+/** @type {DGESprite} */ export let teki2; // 2面の敵(とぅと郎)。1体だけなので使い回す
 
 const groupPwr = 'groupPwr';
 
-export let boss;
+/** @type {DGESprite} */ export let boss;
 export const groupBossSh = 'groupBossSh';
 
 // 2面ボスの暴れ状態(フレームをまたいで持ち越すのでファイルレベル)
+/** @type {'r' | 'l' | undefined} 回転方向 */
 let bossTurn;
+/** @type {number} 回転フェーズ(0〜3) */
 export let bossTurnMode; // 検証スクリプトが読むため公開
 // 2面ボス追尾弾の状態(本当は弾ごとに持つべきだが、当時の挙動を維持)
+/** @type {'on' | 'off' | undefined} 追尾発動状態 */
 let turn;
 
 // --------------------------------------------------
@@ -88,6 +91,11 @@ export function removeJiki() {
 	}, BAN_DURATION_MS);
 }
 
+/**
+ * @param {DGESprite[]} shots 追加先のプール
+ * @param {number} num 作る数
+ * @param {{ image: string, width: number, height: number, velocity: number, angle: number }} def
+ */
 function pushJikiShots(shots, num, def) {
 	for (let i = 0; i < num; i++) {
 		shots.push(
@@ -297,6 +305,7 @@ export function moveTeki2() {
 //2面のボス弾 [0]:直進弾 [1]:追尾弾
 const BOSS_SH2_DEFS = [{ velocity: 10 }, { velocity: 5 }];
 
+/** @param {number} num 弾種([0]:直進 [1]:追尾) */
 export function newSpriteBossSh2(num) {
 	const def = BOSS_SH2_DEFS[num];
 	const wBossSh = 16;
@@ -454,12 +463,23 @@ export function makeTeki1() {
 }
 
 // 雑魚敵と自機全ショットの当たり判定(レーザーだけ貫通するのでダメージ倍率が別)
+/**
+ * @param {DGESprite} sprite
+ * @param {number} laserDamage レーザーのダメージ倍率
+ */
 function hitAllJikiSh(sprite, laserDamage) {
 	hitJikiSh(sprite, 0, numJikiSh1, jikiSh1, 1);
 	hitJikiSh(sprite, 0, numJikiSh2, jikiSh2, 1);
 	hitJikiSh(sprite, 1, numJikiSh3, jikiSh3, laserDamage);
 }
 
+/**
+ * @param {DGESprite} sprite 当たられる側(敵)
+ * @param {number} type 1ならレーザー(貫通して消えない)
+ * @param {number} num プール内の弾数
+ * @param {DGESprite[]} jikiSh 弾のプール
+ * @param {number} damage
+ */
 function hitJikiSh(sprite, type, num, jikiSh, damage) {
 	for (let i = 0; i < num; i++) {
 		if (jikiSh[i].get('active') && sprite.isTouching(jikiSh[i])) {
@@ -475,6 +495,7 @@ function hitJikiSh(sprite, type, num, jikiSh, damage) {
 	}
 }
 
+/** @param {DGESprite} sprite */
 function banSprite(sprite) {
 	if (sprite.get('tag') !== 'boss') {
 		// BOSSのときはスルー
@@ -488,6 +509,7 @@ function banSprite(sprite) {
 	}, BAN_DURATION_MS);
 }
 
+/** @param {DGESprite} sprite */
 function touchJiki(sprite) {
 	if (state.muteki) return; // デバッグ用無敵
 	if (!sprite.isTouching(jiki)) return;
@@ -532,6 +554,7 @@ export function rmGroupTeki() {
 
 // --------------------------------------------------
 // 1面のボス弾
+/** @param {number} num 発射カウント(角度と発射口が交互に変わる) */
 export function makeBossSh1(num) {
 	const velBossSh = 2;
 	const wBossSh = 4;

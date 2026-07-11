@@ -20,6 +20,7 @@ jobs:
       - run: npm ci
       - run: npm run format:check
       - run: npm run lint
+      - run: npm run typecheck
       - run: npm test
       # ubuntu ランナーには Google Chrome と python3 が同梱されている
       - run: npm run test:e2e

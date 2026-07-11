@@ -26,6 +26,10 @@ function makeJikiSh() {
 	if (state.jikiShFlg === 2) shotJikiSh(2, numJikiSh2); // 後
 }
 
+/**
+ * @param {number} type ショット種別(1:前 2:後 3:レーザー)
+ * @param {number} num プール内の弾数
+ */
 function shotJikiSh(type, num) {
 	for (let i = 0; i < num; i++) {
 		if (type === 1) {
@@ -54,6 +58,10 @@ function shotJikiSh(type, num) {
 	}
 }
 
+/**
+ * @param {DGESprite} shot
+ * @param {number} i ショット種別(発射位置が変わる)
+ */
 function startJikiSh(shot, i) {
 	if (i === 1 || i === 3) {
 		shot.plot(jiki.x + jiki.width, jiki.y + 12);
@@ -66,6 +74,7 @@ function startJikiSh(shot, i) {
 
 // --------------------------------------------------
 // キーボード操作
+/** @param {number} keyCode */
 export function eventKeyDown(keyCode) {
 	if (keyCode === DGE.Keyboard.SPACE) {
 		if (stepFlg === STEP_TITLE) goReady();

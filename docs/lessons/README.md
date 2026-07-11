@@ -27,3 +27,4 @@
 | 16 | [自動化の門番 — git hooks と CI](16-automation.md) | `d5ada19` |
 | 17 | [見た目の議論を終わらせる — Prettier](17-formatter.md) | `bb2b735` |
 | 18 | [型は仕様書 — JSDoc + TypeScript チェッカー](18-types.md) | `8513e88` |
+| 19 | [世界に置く — GitHub Pages で公開](19-publish.md) | `56a746c` |

@@ -2,10 +2,12 @@
 	"name": "ridge-bu",
 	"private": true,
 	"description": "RIDGE部 — DHTMLシューティングゲーム",
+	"type": "module",
 	"scripts": {
 		"lint": "eslint js",
 		"test": "node --test \"test/unit/**/*.test.mjs\"",
-		"test:e2e": "node --test --test-concurrency=1 --test-timeout=180000 \"test/e2e/**/*.test.mjs\""
+		"test:e2e": "node --test --test-concurrency=1 --test-timeout=180000 \"test/e2e/**/*.test.mjs\"",
+		"prepare": "git config core.hooksPath .githooks"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",

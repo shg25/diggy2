@@ -1,0 +1,24 @@
+# push / PR のたびに GitHub のサーバー上で全検査を回す。
+# ローカルの pre-commit は速い検査(lint+単体)だけなので、
+# 重い E2E はここで確実に実行する。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      # ubuntu ランナーには Google Chrome と python3 が同梱されている
+      - run: npm run test:e2e

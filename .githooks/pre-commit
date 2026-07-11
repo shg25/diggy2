@@ -1,0 +1,4 @@
+#!/bin/sh
+# コミット前の門番: 速い検査だけを回す(重いE2EはCIに任せる)
+echo "pre-commit: lint + 単体テスト"
+npm run lint && npm test

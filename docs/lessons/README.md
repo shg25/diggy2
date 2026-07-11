@@ -20,3 +20,4 @@
 | 09 | [数字に名前を — ただし全部ではない](09-magic-numbers.md) | `d844cdc` |
 | 10 | [消す勇気 — gitがあるから捨てられる](10-delete-dead-code.md) | `89d6713` |
 | 11 | [部屋に仕切りを — ES modules への移行](11-es-modules.md) | `fdb0a63` |
+| 12 | [見張りを機械に任せる — ESLint導入](12-eslint.md) | `6134128` |

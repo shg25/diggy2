@@ -27,13 +27,9 @@
 <script src="lib/diggy/core/xhr.js"></script>
 <script src="lib/diggy/core/mouse.js"></script>
 
-<script src="js/const.js"></script>
-<script src="js/text.js"></script>
-<script src="js/sprite.js"></script>
-<script src="js/set.js"></script>
-<script src="js/stage.js"></script>
-<script src="js/step.js"></script>
-<script src="js/ridge.js"></script>
+<!-- ゲーム本体はES modules。エントリポイントだけ読み込めば、
+     依存関係(import)をブラウザが辿って全ファイルを正しい順で読む -->
+<script type="module" src="js/ridge.js"></script>
 
 </body>
 </html>

@@ -1,31 +1,33 @@
-'use strict';
+import { STATE_SET, STATE_SHOW, txtAlert, txtScore, newTxtAlert, setTxtAlert, newTxtScore, setTxtScore, newTxtStage } from './text.js';
+import { logo, jiki, newSpriteBg, newSpriteLogo, newSpriteJiki, defineJikiSh, removeJiki, getoutBoss, resetSprite, newSpriteBoss } from './sprite.js';
+import { moveJiki, startStage, stopStage } from './stage.js';
 
-var stepFlg = 0;
+export let stepFlg = 0;
 
-var STEP_TITLE  = 0;
-var STEP_RETURN = 1;
-var STEP_READY  = 10;
-var STEP_START  = 11;
-var STEP_COME   = 12;
-var STEP_BATTLE = 13;
-var STEP_WIN    = 14;
-var STEP_LOSE   = 19;
+export const STEP_TITLE  = 0;
+export const STEP_RETURN = 1;
+export const STEP_READY  = 10;
+export const STEP_START  = 11;
+export const STEP_COME   = 12;
+export const STEP_BATTLE = 13;
+export const STEP_WIN    = 14;
+export const STEP_LOSE   = 19;
 
-function isPlay() {
+export function isPlay() {
 	if(stepFlg === STEP_READY || stepFlg === STEP_START || stepFlg === STEP_COME || stepFlg === STEP_BATTLE || stepFlg === STEP_WIN) {
 		return true;
 	}
 	return false;
 }
 
-function isFight() {
+export function isFight() {
 	if(stepFlg === STEP_START || stepFlg === STEP_COME || stepFlg === STEP_BATTLE) {
 		return true;
 	}
 	return false;
 }
 
-function isFightBoss() {
+export function isFightBoss() {
 	if(stepFlg === STEP_COME || stepFlg === STEP_BATTLE) {
 		return true;
 	}
@@ -47,41 +49,40 @@ function setStep(step) {
 
 // --------------------------------------------------
 // 初期設定
-function init() {
+export function init() {
 	DGE.init({
 		id : 'screen',
 		background : '#000',
 		width : 600, height : 400
 	});
-	
+
 	new DGE.Loader([
 		'gfx/title/logo.gif', 'gfx/bg.gif',
 		'gfx/teki/61/l_1.gif', 'gfx/teki/61/l_2.gif', 'gfx/teki/61/l_3.gif'
 	]);
-	
+
 	newTxtScore('Score: 0');
 	newTxtStage('STAGE 1');
 	newSpriteBg();
-	keyboard = DGE.Keyboard;
-	
+
 	goTitle();
-};
+}
 
 // タイトル
-function goTitle() {
+export function goTitle() {
 	setStep(STEP_TITLE);
 	newSpriteLogo();
-};
+}
 
 // リターン
-function goReturn() {
+export function goReturn() {
 	setStep(STEP_RETURN);
 	resetSprite();
 	goTitle();
 }
 
 // 準備
-function goReady() {
+export function goReady() {
 	setStep(STEP_READY);
 	logo.remove();
 	setTxtScore(txtScore.get('points') * -1);
@@ -92,31 +93,31 @@ function goReady() {
 	setTimeout(function() {
 		goStart();
 	}, 2000);
-};
+}
 
 // 開始
-function goStart() {
+export function goStart() {
 	setStep(STEP_START);
 	setTxtAlert('GO!!', 290, 160, STATE_SET);
 	setTimeout(function() {
 		txtAlert.hide();
 		startStage();
 	}, 1000);
-};
+}
 
 // ボス登場
-function goCome() {
+export function goCome() {
 	setStep(STEP_COME);
 	newSpriteBoss();
-};
+}
 
 // ボス戦
-function goBattle() {
+export function goBattle() {
 	setStep(STEP_BATTLE);
-};
+}
 
 // ボス撃破
-function goWin() {
+export function goWin() {
 	setStep(STEP_WIN);
 	setTxtAlert('YOU WIN', 270, 160, STATE_SHOW);
 	setTimeout(function() {
@@ -125,10 +126,10 @@ function goWin() {
 		stopStage();
 		goReturn();
 	}, 5000);
-};
+}
 
 // 負け
-function goLose() {
+export function goLose() {
 	setStep(STEP_LOSE);
 	if (moveJiki.get('active')) moveJiki.stop();
 	removeJiki();
@@ -139,4 +140,4 @@ function goLose() {
 		stopStage();
 		goReturn();
 	}, 3000);
-};
+}

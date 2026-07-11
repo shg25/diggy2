@@ -1,40 +1,44 @@
-'use strict';
+import { BOMB_DURATION_MS } from './const.js';
+import { state } from './state.js';
+import { jiki, boss, groupBossSh, jikiSh1, jikiSh2, jikiSh3, numJikiSh1, numJikiSh2, numJikiSh3 } from './sprite.js';
+import { STEP_TITLE, stepFlg, isPlay, goReady } from './step.js';
+import { changeStage } from './stage.js';
 
 // ショット変更
-function chJikiSh() {
-	if (jikiShFlg !== 3) jikiShFlg += 1;
-	else jikiShFlg = 0;
+export function chJikiSh() {
+	if (state.jikiShFlg !== 3) state.jikiShFlg += 1;
+	else state.jikiShFlg = 0;
 }
 
 // スピード変更
-function chVelJiki() {
-	if (velJiki === 5) velJiki = 10;
-	else if (velJiki === 10) velJiki = 30;
-	else if (velJiki === 30) velJiki = 1;
-	else if (velJiki === 1) velJiki = 5;
+export function chVelJiki() {
+	if (state.velJiki === 5) state.velJiki = 10;
+	else if (state.velJiki === 10) state.velJiki = 30;
+	else if (state.velJiki === 30) state.velJiki = 1;
+	else if (state.velJiki === 1) state.velJiki = 5;
 }
 
 // ボム
-function rmGroupTeki() {
+export function rmGroupTeki() {
 	if (boss.get('active')) {
 		DGE.Sprite.execByProperty('group', groupBossSh, 'remove');
 	}
-	bombTeki = 1;
+	state.bombTeki = 1;
 	setTimeout(function() {
-		bombTeki = 0;
+		state.bombTeki = 0;
 	}, BOMB_DURATION_MS);
 }
 
 // --------------------------------------------------
 // ショット撃つ
 function makeJikiSh() {
-	if (jikiShFlg === 3) { 
+	if (state.jikiShFlg === 3) {
 		shotJikiSh(3, numJikiSh3); // 3方向
 		return;
 	}
 	shotJikiSh(1, numJikiSh1); // 前
-	if (jikiShFlg === 2) shotJikiSh(2, numJikiSh2); // 後
-};
+	if (state.jikiShFlg === 2) shotJikiSh(2, numJikiSh2); // 後
+}
 
 function shotJikiSh(type, num) {
 	for (var i = 0; i < num; i++) {
@@ -72,16 +76,16 @@ function startJikiSh(shot, i) {
 
 // --------------------------------------------------
 // キーボード操作
-function eventKeyDown(keyCode) {
+export function eventKeyDown(keyCode) {
 	if (keyCode === DGE.Keyboard.SPACE) {
 		if (stepFlg === STEP_TITLE) goReady();
 		if (isPlay()) makeJikiSh();
 	}
-	
+
 	var KEYCODE_S = 83;
 	var KEYCODE_Z = 90;
 	var KEYCODE_B = 66;
-	
+
 	if (keyCode === KEYCODE_S) {
 		if (stepFlg === STEP_TITLE) changeStage();
 		if (isPlay()) chVelJiki(); // 隠しコマンド

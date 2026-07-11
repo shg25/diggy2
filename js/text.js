@@ -1,14 +1,12 @@
-'use strict';
+export const STATE_SET = 0;
+export const STATE_SHOW = 1;
 
-var STATE_SET = 0;
-var STATE_SHOW = 1;
+const FONT = 'verdana';
+export let txtAlert;
+export let txtScore;
+export let txtStage;
 
-var FONT = 'verdana';
-var txtAlert;
-var txtScore;
-var txtStage;
-
-function newTxtAlert(text) {
+export function newTxtAlert(text) {
 	// 2回目以降は作り直さず、初回に作ったものを使い回す
 	if (txtAlert) {
 		setTxtAlert(text, 280, 160, STATE_SHOW);
@@ -25,7 +23,7 @@ function newTxtAlert(text) {
 	});
 }
 
-function setTxtAlert(text, x, y, state) {
+export function setTxtAlert(text, x, y, state) {
 	txtAlert.set('text', text);
 	if(state === STATE_SET) {
 		txtAlert.plot(x, y);
@@ -36,7 +34,7 @@ function setTxtAlert(text, x, y, state) {
 
 // --------------------------------------------------
 
-function newTxtScore(text) {
+export function newTxtScore(text) {
 	txtScore = new DGE.Text({
 		font : FONT, text : text, width : 200, height : 20,
 		x : 5, y : 5, z : 3,
@@ -44,15 +42,14 @@ function newTxtScore(text) {
 	});
 }
 
-function setTxtScore(i) {
+export function setTxtScore(i) {
 	txtScore.set('points', txtScore.get('points') + i);
 	txtScore.set('text', DGE.sprintf('Score: %s', DGE.formatNumber(txtScore.get('points'))));
 }
 
-
 // --------------------------------------------------
 
-function newTxtStage(text) {
+export function newTxtStage(text) {
 	txtStage = new DGE.Text({
 		font : FONT,
 		text : text,

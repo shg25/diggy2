@@ -21,8 +21,10 @@ python3 -m http.server 8720
 ## 開発
 
 ```sh
-npm install   # 開発ツール(ESLint)のインストール
-npm run lint  # コード検査
+npm install       # 開発ツールのインストール
+npm run lint      # コード検査(ESLint)
+npm test          # 単体テスト(状態機械・ミリ秒で完了)
+npm run test:e2e  # 回帰テスト(ヘッドレスChromeで実ゲームを遊ぶ・約2分)
 ```
 
 ## ディレクトリ構成

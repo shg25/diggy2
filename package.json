@@ -3,11 +3,14 @@
 	"private": true,
 	"description": "RIDGE部 — DHTMLシューティングゲーム",
 	"scripts": {
-		"lint": "eslint js"
+		"lint": "eslint js",
+		"test": "node --test \"test/unit/**/*.test.mjs\"",
+		"test:e2e": "node --test --test-concurrency=1 --test-timeout=180000 \"test/e2e/**/*.test.mjs\""
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"eslint": "^10.7.0",
-		"globals": "^17.7.0"
+		"globals": "^17.7.0",
+		"playwright-core": "^1.61.1"
 	}
 }

@@ -1,5 +1,16 @@
 import { state } from './state.js';
-import { jiki, jikiSh1, jikiSh2, jikiSh3, numJikiSh1, numJikiSh2, numJikiSh3, chJikiSh, chVelJiki, rmGroupTeki } from './sprite.js';
+import {
+	jiki,
+	jikiSh1,
+	jikiSh2,
+	jikiSh3,
+	numJikiSh1,
+	numJikiSh2,
+	numJikiSh3,
+	chJikiSh,
+	chVelJiki,
+	rmGroupTeki,
+} from './sprite.js';
 import { STEP_TITLE, stepFlg, isPlay } from './flow.js';
 import { goReady } from './step.js';
 import { changeStage } from './stage.js';
@@ -17,18 +28,22 @@ function makeJikiSh() {
 
 function shotJikiSh(type, num) {
 	for (let i = 0; i < num; i++) {
-		if(type === 1) {
+		if (type === 1) {
 			if (!jikiSh1[i].get('active')) {
 				startJikiSh(jikiSh1[i], 1);
 				break;
 			}
-		} else if(type === 2) {
+		} else if (type === 2) {
 			if (!jikiSh2[i].get('active')) {
 				startJikiSh(jikiSh2[i], 2);
 				break;
 			}
-		} else if(type === 3) {
-			if (!jikiSh3[i].get('active') && !jikiSh3[i + 1].get('active') && !jikiSh3[i + 2].get('active')) {
+		} else if (type === 3) {
+			if (
+				!jikiSh3[i].get('active') &&
+				!jikiSh3[i + 1].get('active') &&
+				!jikiSh3[i + 2].get('active')
+			) {
 				for (let n = 0; n < numJikiSh3; n++) {
 					jikiSh3[i + n].set('angle', 150 + 30 * n);
 					startJikiSh(jikiSh3[i + n], 3);
@@ -40,10 +55,10 @@ function shotJikiSh(type, num) {
 }
 
 function startJikiSh(shot, i) {
-	if(i === 1 || i === 3) {
-		shot.plot((jiki.x + jiki.width), (jiki.y + 12));
-	} else if(i === 2) {
-		shot.plot((jiki.x), (jiki.y + 12));
+	if (i === 1 || i === 3) {
+		shot.plot(jiki.x + jiki.width, jiki.y + 12);
+	} else if (i === 2) {
+		shot.plot(jiki.x, jiki.y + 12);
 	}
 	shot.show();
 	shot.start();

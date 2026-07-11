@@ -1,6 +1,38 @@
-import { STEP_TITLE, STEP_RETURN, STEP_READY, STEP_START, STEP_COME, STEP_BATTLE, STEP_WIN, STEP_LOSE, setStep, transitions } from './flow.js';
-import { STATE_SET, STATE_SHOW, txtAlert, txtScore, newTxtAlert, setTxtAlert, newTxtScore, setTxtScore, newTxtStage } from './text.js';
-import { logo, jiki, newSpriteBg, newSpriteLogo, newSpriteJiki, defineJikiSh, removeJiki, getoutBoss, resetSprite, newSpriteBoss } from './sprite.js';
+import {
+	STEP_TITLE,
+	STEP_RETURN,
+	STEP_READY,
+	STEP_START,
+	STEP_COME,
+	STEP_BATTLE,
+	STEP_WIN,
+	STEP_LOSE,
+	setStep,
+	transitions,
+} from './flow.js';
+import {
+	STATE_SET,
+	STATE_SHOW,
+	txtAlert,
+	txtScore,
+	newTxtAlert,
+	setTxtAlert,
+	newTxtScore,
+	setTxtScore,
+	newTxtStage,
+} from './text.js';
+import {
+	logo,
+	jiki,
+	newSpriteBg,
+	newSpriteLogo,
+	newSpriteJiki,
+	defineJikiSh,
+	removeJiki,
+	getoutBoss,
+	resetSprite,
+	newSpriteBoss,
+} from './sprite.js';
 import { moveJiki, startStage, stopStage } from './stage.js';
 
 // 下位レイヤーが発火する場面遷移に、実体を結びつける
@@ -12,14 +44,18 @@ transitions.lose = goLose;
 // 初期設定
 export function init() {
 	DGE.init({
-		id : 'screen',
-		background : '#000',
-		width : 600, height : 400
+		id: 'screen',
+		background: '#000',
+		width: 600,
+		height: 400,
 	});
 
 	new DGE.Loader([
-		'gfx/title/logo.gif', 'gfx/bg.gif',
-		'gfx/teki/61/l_1.gif', 'gfx/teki/61/l_2.gif', 'gfx/teki/61/l_3.gif'
+		'gfx/title/logo.gif',
+		'gfx/bg.gif',
+		'gfx/teki/61/l_1.gif',
+		'gfx/teki/61/l_2.gif',
+		'gfx/teki/61/l_3.gif',
 	]);
 
 	newTxtScore('Score: 0');
@@ -51,7 +87,7 @@ export function goReady() {
 	newSpriteJiki();
 	defineJikiSh();
 	moveJiki.start();
-	setTimeout(function() {
+	setTimeout(function () {
 		goStart();
 	}, 2000);
 }
@@ -60,7 +96,7 @@ export function goReady() {
 export function goStart() {
 	setStep(STEP_START);
 	setTxtAlert('GO!!', 290, 160, STATE_SET);
-	setTimeout(function() {
+	setTimeout(function () {
 		txtAlert.hide();
 		startStage();
 	}, 1000);
@@ -81,7 +117,7 @@ export function goBattle() {
 export function goWin() {
 	setStep(STEP_WIN);
 	setTxtAlert('YOU WIN', 270, 160, STATE_SHOW);
-	setTimeout(function() {
+	setTimeout(function () {
 		jiki.remove();
 		txtAlert.hide();
 		stopStage();
@@ -96,7 +132,7 @@ export function goLose() {
 	removeJiki();
 	getoutBoss();
 	setTxtAlert('GAME OVER', 270, 160, STATE_SHOW);
-	setTimeout(function() {
+	setTimeout(function () {
 		txtAlert.hide();
 		stopStage();
 		goReturn();

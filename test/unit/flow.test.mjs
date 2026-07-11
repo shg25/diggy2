@@ -5,9 +5,20 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-	STEP_TITLE, STEP_RETURN, STEP_READY, STEP_START,
-	STEP_COME, STEP_BATTLE, STEP_WIN, STEP_LOSE,
-	stepFlg, setStep, isPlay, isFight, isFightBoss, transitions
+	STEP_TITLE,
+	STEP_RETURN,
+	STEP_READY,
+	STEP_START,
+	STEP_COME,
+	STEP_BATTLE,
+	STEP_WIN,
+	STEP_LOSE,
+	stepFlg,
+	setStep,
+	isPlay,
+	isFight,
+	isFightBoss,
+	transitions,
 } from '../../js/flow.js';
 
 test('初期状態はタイトル', () => {
@@ -24,14 +35,14 @@ test('setStep で状態が変わる(live binding で読める)', () => {
 test('isPlay / isFight / isFightBoss の真理値表', () => {
 	// [状態, isPlay, isFight, isFightBoss]
 	const table = [
-		[STEP_TITLE,  false, false, false],
+		[STEP_TITLE, false, false, false],
 		[STEP_RETURN, false, false, false],
-		[STEP_READY,  true,  false, false],
-		[STEP_START,  true,  true,  false],
-		[STEP_COME,   true,  true,  true],
-		[STEP_BATTLE, true,  true,  true],
-		[STEP_WIN,    true,  false, false],
-		[STEP_LOSE,   false, false, false]
+		[STEP_READY, true, false, false],
+		[STEP_START, true, true, false],
+		[STEP_COME, true, true, true],
+		[STEP_BATTLE, true, true, true],
+		[STEP_WIN, true, false, false],
+		[STEP_LOSE, false, false, false],
 	];
 	for (const [step, play, fight, fightBoss] of table) {
 		setStep(step);
@@ -53,7 +64,9 @@ test('transitions は既定で安全な no-op、上位が実体を登録でき�
 	// 登録すれば呼ばれる
 	let called = 0;
 	const original = transitions.lose;
-	transitions.lose = () => { called++; };
+	transitions.lose = () => {
+		called++;
+	};
 	transitions.lose();
 	assert.equal(called, 1);
 	transitions.lose = original; // 後片付け

@@ -17,9 +17,9 @@ export const numJikiSh3 = 3;
 
 // 自機ショット定義 [0]:前 [1]:後 [2]:レーザー
 const JIKI_SH_DEFS = [
-	{ image : 'gfx/jiki/s1.gif', width : 8,  height : 8, velocity : 16, angle : 180 },
-	{ image : 'gfx/jiki/s1.gif', width : 8,  height : 8, velocity : 16, angle : 0 },
-	{ image : 'gfx/jiki/s3.gif', width : 16, height : 8, velocity : 6,  angle : 180 }
+	{ image: 'gfx/jiki/s1.gif', width: 8, height: 8, velocity: 16, angle: 180 },
+	{ image: 'gfx/jiki/s1.gif', width: 8, height: 8, velocity: 16, angle: 0 },
+	{ image: 'gfx/jiki/s3.gif', width: 16, height: 8, velocity: 6, angle: 180 },
 ];
 
 const groupTeki = 'groupTeki';
@@ -40,51 +40,69 @@ let turn;
 
 export function newSpriteBg() {
 	new DGE.Sprite({
-		image : 'gfx/bg.gif', width : 1920, height : 320,
-		x : 0, y : DGE.stage.height - 320, z : 1,
-		velocity : 2, angle : 0
+		image: 'gfx/bg.gif',
+		width: 1920,
+		height: 320,
+		x: 0,
+		y: DGE.stage.height - 320,
+		z: 1,
+		velocity: 2,
+		angle: 0,
 	})
-	.on('ping', function() {
-		if (this.x <= -960) {
-			this.set('x', 0);
-		}
-	})
-	.start();
+		.on('ping', function () {
+			if (this.x <= -960) {
+				this.set('x', 0);
+			}
+		})
+		.start();
 }
 
 // --------------------------------------------------
 
 export function newSpriteLogo() {
 	logo = new DGE.Sprite({
-		image : 'gfx/title/logo.gif', width : 320, height : 160,
-		x : 140, y : 40, z : 1
+		image: 'gfx/title/logo.gif',
+		width: 320,
+		height: 160,
+		x: 140,
+		y: 40,
+		z: 1,
 	});
 }
 
 export function newSpriteJiki() {
 	jiki = new DGE.Sprite({
-		image : 'gfx/jiki/n.gif', width : 32, height : 32,
-		x : DGE.stage.width / 2 - 16, y : DGE.stage.height / 2 - 16, z : 2
+		image: 'gfx/jiki/n.gif',
+		width: 32,
+		height: 32,
+		x: DGE.stage.width / 2 - 16,
+		y: DGE.stage.height / 2 - 16,
+		z: 2,
 	});
 }
 
 export function removeJiki() {
 	jiki.set('image', 'gfx/ban.gif');
-	setTimeout(function() {
+	setTimeout(function () {
 		jiki.remove();
 	}, BAN_DURATION_MS);
 }
 
 function pushJikiShots(shots, num, def) {
 	for (let i = 0; i < num; i++) {
-		shots.push(new DGE.Sprite({
-			image : def.image, width : def.width, height : def.height,
-			velocity : def.velocity, angle : def.angle
-		})
-		.on('ping', function() {
-			if (this.isOutOfBounds(true)) this.hide().stop();
-		})
-		.hide());
+		shots.push(
+			new DGE.Sprite({
+				image: def.image,
+				width: def.width,
+				height: def.height,
+				velocity: def.velocity,
+				angle: def.angle,
+			})
+				.on('ping', function () {
+					if (this.isOutOfBounds(true)) this.hide().stop();
+				})
+				.hide(),
+		);
 	}
 }
 
@@ -101,8 +119,8 @@ export function defineJikiSh() {
 
 // ボス定義 [0]:1面 [1]:2面(猫バス)
 const BOSS_DEFS = [
-	{ width : 278, height : 65,  x : -277, y : 300, velocity : 1,  angle : 170 },
-	{ width : 222, height : 120, x : 599,  y : 270, velocity : 10, angle : 0 }
+	{ width: 278, height: 65, x: -277, y: 300, velocity: 1, angle: 170 },
+	{ width: 222, height: 120, x: 599, y: 270, velocity: 10, angle: 0 },
 ];
 
 export function newSpriteBoss() {
@@ -112,99 +130,113 @@ export function newSpriteBoss() {
 	const def = BOSS_DEFS[n];
 
 	boss = new DGE.Sprite({
-		image : 'gfx/teki/' + (n + 60) + '/l.gif', width : def.width, height : def.height,
-		x : def.x, y : def.y, z : 2,
-		velocity : def.velocity, angle : def.angle,
-		life : 20, score : 5000,
-		n : n, tag : 'boss'
+		image: 'gfx/teki/' + (n + 60) + '/l.gif',
+		width: def.width,
+		height: def.height,
+		x: def.x,
+		y: def.y,
+		z: 2,
+		velocity: def.velocity,
+		angle: def.angle,
+		life: 20,
+		score: 5000,
+		n: n,
+		tag: 'boss',
 	})
-	.on('ping', function() {
-		if (!this.get('active')) return;
-		// 後方ショット(jikiSh2)はボスに当たらない仕様
-		hitJikiSh(this, 0, numJikiSh1, jikiSh1, 1);
-		hitJikiSh(this, 1, numJikiSh3, jikiSh3, 0.2);
-		touchJiki(this);
+		.on('ping', function () {
+			if (!this.get('active')) return;
+			// 後方ショット(jikiSh2)はボスに当たらない仕様
+			hitJikiSh(this, 0, numJikiSh1, jikiSh1, 1);
+			hitJikiSh(this, 1, numJikiSh3, jikiSh3, 0.2);
+			touchJiki(this);
 
-		if (state.stageFlg !== 1) { // 2面のボスの動き
-			if (stepFlg === STEP_COME) {
-				if (this.x <= -222) {
-					this.set('image', 'gfx/teki/61/r.gif');
-					this.set('angle', 180);
-				}
-				if (this.x >= 600) {
-					this.set('image', 'gfx/teki/61/l.gif');
-					this.set('angle', 0);
-				}
-
-				// 暴れます
-				if (this.get('life') <= 10) {
-					if (this.get('angle') === 180) {
-						bossTurn = "r";
-					} else if (this.get('angle') === 0) {
-						bossTurn = "l";
+			if (state.stageFlg !== 1) {
+				// 2面のボスの動き
+				if (stepFlg === STEP_COME) {
+					if (this.x <= -222) {
+						this.set('image', 'gfx/teki/61/r.gif');
+						this.set('angle', 180);
 					}
-					bossTurnMode = 0;
-					transitions.battle();
-				}
-			} // STEP_COME
-
-			if (stepFlg === STEP_BATTLE) { // 暴れる
-				if (bossTurn === "r") { // 反時計回り
 					if (this.x >= 600) {
 						this.set('image', 'gfx/teki/61/l.gif');
 						this.set('angle', 0);
-						bossTurn = "l";
 					}
-				}
-				if (bossTurn === "l") { // 時計回り
-					if (bossTurnMode === 0 && this.x <= 0) {
-						this.set('angle', 90);
-						this.set('width', 120);
-						this.set('height', 222);
-						this.set('image', 'gfx/teki/61/l_1.gif');
-						bossTurnMode = 1;
-					}
-					if (bossTurnMode === 1 && this.y <= 0) {
-						this.set('angle', 180);
-						this.set('width', 222);
-						this.set('height', 120);
-						this.set('image', 'gfx/teki/61/l_2.gif');
-						bossTurnMode = 2;
-					}
-					if (bossTurnMode === 2 && this.x >= 400) {
-						this.set('angle', 270);
-						this.set('width', 120);
-						this.set('height', 222);
-						this.set('x', 480);
-						this.set('image','gfx/teki/61/l_3.gif');
-						bossTurnMode = 3;
-					}
-					if (bossTurnMode === 3 && this.y >= 178) {
-						this.set('angle', 0);
-						this.set('width', 222);
-						this.set('height', 120);
-						this.set('y', 270);
-						this.set('image', 'gfx/teki/61/l.gif');
+
+					// 暴れます
+					if (this.get('life') <= 10) {
+						if (this.get('angle') === 180) {
+							bossTurn = 'r';
+						} else if (this.get('angle') === 0) {
+							bossTurn = 'l';
+						}
 						bossTurnMode = 0;
+						transitions.battle();
+					}
+				} // STEP_COME
+
+				if (stepFlg === STEP_BATTLE) {
+					// 暴れる
+					if (bossTurn === 'r') {
+						// 反時計回り
+						if (this.x >= 600) {
+							this.set('image', 'gfx/teki/61/l.gif');
+							this.set('angle', 0);
+							bossTurn = 'l';
+						}
+					}
+					if (bossTurn === 'l') {
+						// 時計回り
+						if (bossTurnMode === 0 && this.x <= 0) {
+							this.set('angle', 90);
+							this.set('width', 120);
+							this.set('height', 222);
+							this.set('image', 'gfx/teki/61/l_1.gif');
+							bossTurnMode = 1;
+						}
+						if (bossTurnMode === 1 && this.y <= 0) {
+							this.set('angle', 180);
+							this.set('width', 222);
+							this.set('height', 120);
+							this.set('image', 'gfx/teki/61/l_2.gif');
+							bossTurnMode = 2;
+						}
+						if (bossTurnMode === 2 && this.x >= 400) {
+							this.set('angle', 270);
+							this.set('width', 120);
+							this.set('height', 222);
+							this.set('x', 480);
+							this.set('image', 'gfx/teki/61/l_3.gif');
+							bossTurnMode = 3;
+						}
+						if (bossTurnMode === 3 && this.y >= 178) {
+							this.set('angle', 0);
+							this.set('width', 222);
+							this.set('height', 120);
+							this.set('y', 270);
+							this.set('image', 'gfx/teki/61/l.gif');
+							bossTurnMode = 0;
+						}
 					}
 				}
+			} else {
+				// 1面のボスの動き
+				if (this.isOutOfBounds(true)) {
+					this.remove();
+					return;
+				}
+				if (stepFlg === STEP_COME && this.x >= 310) {
+					// 後進
+					this.set('angle', 90);
+					transitions.battle();
+				}
+				if (stepFlg === STEP_BATTLE) {
+					// 上下移動
+					if (this.y <= 50) this.set('angle', 270);
+					if (this.y >= 300) this.set('angle', 90);
+				}
 			}
-		} else { // 1面のボスの動き
-			if (this.isOutOfBounds(true)) {
-				this.remove();
-				return;
-			}
-			if (stepFlg === STEP_COME && this.x >= 310) { // 後進
-				this.set('angle', 90);
-				transitions.battle();
-			}
-			if (stepFlg === STEP_BATTLE) { // 上下移動
-				if (this.y <= 50) this.set('angle', 270);
-				if (this.y >= 300) this.set('angle', 90);
-			}
-		}
-	})
-	.start();
+		})
+		.start();
 }
 
 export function getoutBoss() {
@@ -217,32 +249,39 @@ export function getoutBoss() {
 // とぅと郎
 export function newSpriteTeki2() {
 	teki2 = new DGE.Sprite({
-		image : 'gfx/teki/20/l.gif', width : 32, height : 32,
-		x : 599, y : 200, z : 2,
-		velocity : 5, angle : 0,
-		life : 90, score : 5000,
-		n : 20, group : groupTeki,
-		turn : 'up'
+		image: 'gfx/teki/20/l.gif',
+		width: 32,
+		height: 32,
+		x: 599,
+		y: 200,
+		z: 2,
+		velocity: 5,
+		angle: 0,
+		life: 90,
+		score: 5000,
+		n: 20,
+		group: groupTeki,
+		turn: 'up',
 	})
-	.on('ping', function() {
-		if (!this.get('active')) return;
-		if (this.isOutOfBounds(true)) {
-			state.numTeki--;
-			this.remove();
-			return;
-		}
-		hitAllJikiSh(this, 0.8);
-		touchJiki(this);
-	})
-	.start();
+		.on('ping', function () {
+			if (!this.get('active')) return;
+			if (this.isOutOfBounds(true)) {
+				state.numTeki--;
+				this.remove();
+				return;
+			}
+			hitAllJikiSh(this, 0.8);
+			touchJiki(this);
+		})
+		.start();
 }
 
 export function moveTeki2() {
 	if (teki2.get('angle') >= 80) teki2.set('turn', 'down');
 	else if (teki2.get('angle') <= -80) teki2.set('turn', 'up');
 
-	if (teki2.get('turn') === "up") teki2.set('angle', teki2.get('angle') + 5);
-	else if (teki2.get('turn') === "down") teki2.set('angle', teki2.get('angle') - 5);
+	if (teki2.get('turn') === 'up') teki2.set('angle', teki2.get('angle') + 5);
+	else if (teki2.get('turn') === 'down') teki2.set('angle', teki2.get('angle') - 5);
 
 	if (teki2.get('x') >= 500) {
 		teki2.set('velocity', 5);
@@ -256,10 +295,7 @@ export function moveTeki2() {
 // --------------------------------------------------
 
 //2面のボス弾 [0]:直進弾 [1]:追尾弾
-const BOSS_SH2_DEFS = [
-	{ velocity : 10 },
-	{ velocity : 5 }
-];
+const BOSS_SH2_DEFS = [{ velocity: 10 }, { velocity: 5 }];
 
 export function newSpriteBossSh2(num) {
 	const def = BOSS_SH2_DEFS[num];
@@ -267,44 +303,57 @@ export function newSpriteBossSh2(num) {
 	const hBossSh = 16;
 	const xBossSh = 60;
 	const yBossSh = 60;
-	const angBossSh = Math.atan2((jiki.get('y') - boss.get('y')) * -1, (jiki.get('x') - boss.get('x')) * -1) * 180 / Math.PI;
+	const angBossSh =
+		(Math.atan2((jiki.get('y') - boss.get('y')) * -1, (jiki.get('x') - boss.get('x')) * -1) * 180) /
+		Math.PI;
 
 	new DGE.Sprite({
-		image : 'gfx/teki/61/s' + (num) + '.gif', width : wBossSh, height : hBossSh,
-		x : boss.x + xBossSh, y : boss.y + yBossSh, z : 2,
-		velocity : def.velocity, angle : angBossSh,
-		life : 20,
-		n : num, group : groupBossSh
+		image: 'gfx/teki/61/s' + num + '.gif',
+		width: wBossSh,
+		height: hBossSh,
+		x: boss.x + xBossSh,
+		y: boss.y + yBossSh,
+		z: 2,
+		velocity: def.velocity,
+		angle: angBossSh,
+		life: 20,
+		n: num,
+		group: groupBossSh,
 	})
-	.on('ping', function() {
-		if (!this.get('active')) return;
-		if (this.isOutOfBounds(true)) {
-			this.remove();
-			return;
-		}
-		if (this.get('active') && this.get('n') === 1 && this.get('life') >= 0) {
-			this.set('life', this.get('life') - 1);
-			turn = "on";
-			return;
-		}
-		if (this.get('life') <= 0 && turn === "on") {
-			this.set('angle', Math.atan2((jiki.get('y') - this.get('y')) * -1, (jiki.get('x') - this.get('x')) * -1) * 180 / Math.PI);
-			this.set('velocity', this.get('velocity') * 3);
-			turn = "off";
-			return;
-		}
-		touchJiki(this);
-	})
-	.start();
+		.on('ping', function () {
+			if (!this.get('active')) return;
+			if (this.isOutOfBounds(true)) {
+				this.remove();
+				return;
+			}
+			if (this.get('active') && this.get('n') === 1 && this.get('life') >= 0) {
+				this.set('life', this.get('life') - 1);
+				turn = 'on';
+				return;
+			}
+			if (this.get('life') <= 0 && turn === 'on') {
+				this.set(
+					'angle',
+					(Math.atan2((jiki.get('y') - this.get('y')) * -1, (jiki.get('x') - this.get('x')) * -1) *
+						180) /
+						Math.PI,
+				);
+				this.set('velocity', this.get('velocity') * 3);
+				turn = 'off';
+				return;
+			}
+			touchJiki(this);
+		})
+		.start();
 }
 
 //--------------------------------------------------
 
 //パワーアップアイテム [0]:ショット変更 [1]:スピード変更 [2]:ボム
 const PWR_DEFS = [
-	{ width : 24, height : 16, velocity : 5 },
-	{ width : 16, height : 24, velocity : 5 },
-	{ width : 16, height : 17, velocity : 10 }
+	{ width: 24, height: 16, velocity: 5 },
+	{ width: 16, height: 24, velocity: 5 },
+	{ width: 16, height: 17, velocity: 10 },
 ];
 
 export function makePwr() {
@@ -321,29 +370,34 @@ export function makePwr() {
 	}
 
 	new DGE.Sprite({
-		image : 'gfx/teki/' + (n + 80) + '/l.gif', width : def.width, height : def.height,
-		x : xTeki, y : DGE.rand(jiki.height, (DGE.stage.height - 100)), z : 2,
-		velocity : velocity,
-		n : n, group : groupPwr
+		image: 'gfx/teki/' + (n + 80) + '/l.gif',
+		width: def.width,
+		height: def.height,
+		x: xTeki,
+		y: DGE.rand(jiki.height, DGE.stage.height - 100),
+		z: 2,
+		velocity: velocity,
+		n: n,
+		group: groupPwr,
 	})
-	.on('ping', function() {
-		if (!this.get('active')) return;
-		if (this.isOutOfBounds(true)) {
-			this.remove(); // アイテムは敵数(numTeki)に入っていないので減らさない
-			return;
-		}
-		touchJiki(this);
-	})
-	.start();
+		.on('ping', function () {
+			if (!this.get('active')) return;
+			if (this.isOutOfBounds(true)) {
+				this.remove(); // アイテムは敵数(numTeki)に入っていないので減らさない
+				return;
+			}
+			touchJiki(this);
+		})
+		.start();
 }
 
 // --------------------------------------------------
 // 1面の雑魚敵定義 (angRange: 進行角のブレ幅。角度は ±angRange/2 の範囲でランダム)
 const TEKI1_DEFS = [
-	{ width : 16, height : 16, velocity : 5,  life : 2, score : 50,   angRange : 30 },
-	{ width : 16, height : 16, velocity : 10, life : 4, score : 1000, angRange : 0 },
-	{ width : 16, height : 16, velocity : 3,  life : 3, score : 100,  angRange : 160 },
-	{ width : 16, height : 16, velocity : 8,  life : 2, score : 250,  angRange : 90 }
+	{ width: 16, height: 16, velocity: 5, life: 2, score: 50, angRange: 30 },
+	{ width: 16, height: 16, velocity: 10, life: 4, score: 1000, angRange: 0 },
+	{ width: 16, height: 16, velocity: 3, life: 3, score: 100, angRange: 160 },
+	{ width: 16, height: 16, velocity: 8, life: 2, score: 250, angRange: 90 },
 ];
 
 // 1面の敵機作る
@@ -365,31 +419,38 @@ export function makeTeki1() {
 	}
 
 	new DGE.Sprite({
-		image : 'gfx/teki/' + n + '/' + lrTeki + '.gif', width : def.width, height : def.height,
-		x : xTeki, y : DGE.rand(jiki.height, (DGE.stage.height - 100)), z : 2,
-		velocity : velocity, angle : angle,
-		life : def.life, score : def.score,
-		n : n, group : groupTeki
+		image: 'gfx/teki/' + n + '/' + lrTeki + '.gif',
+		width: def.width,
+		height: def.height,
+		x: xTeki,
+		y: DGE.rand(jiki.height, DGE.stage.height - 100),
+		z: 2,
+		velocity: velocity,
+		angle: angle,
+		life: def.life,
+		score: def.score,
+		n: n,
+		group: groupTeki,
 	})
-	.on('ping', function() {
-		if (!this.get('active')) return;
-		if (this.isOutOfBounds(true)) {
-			state.numTeki--;
-			this.remove();
-			return;
-		}
-		if (state.bombTeki === 1) banSprite(this);
-		hitAllJikiSh(this, 0.8);
-		touchJiki(this);
+		.on('ping', function () {
+			if (!this.get('active')) return;
+			if (this.isOutOfBounds(true)) {
+				state.numTeki--;
+				this.remove();
+				return;
+			}
+			if (state.bombTeki === 1) banSprite(this);
+			hitAllJikiSh(this, 0.8);
+			touchJiki(this);
 
-		// 上下端で角度速度を鋭利に
-		if (this.y >= 352 || this.y <= 16) {
-			this.set('angle', this.get('angle') * -0.7);
-			this.set('velocity', this.get('velocity') * 1.3);
-			return;
-		}
-	})
-	.start();
+			// 上下端で角度速度を鋭利に
+			if (this.y >= 352 || this.y <= 16) {
+				this.set('angle', this.get('angle') * -0.7);
+				this.set('velocity', this.get('velocity') * 1.3);
+				return;
+			}
+		})
+		.start();
 }
 
 // 雑魚敵と自機全ショットの当たり判定(レーザーだけ貫通するのでダメージ倍率が別)
@@ -403,7 +464,8 @@ function hitJikiSh(sprite, type, num, jikiSh, damage) {
 	for (let i = 0; i < num; i++) {
 		if (jikiSh[i].get('active') && sprite.isTouching(jikiSh[i])) {
 			sprite.set('life', sprite.get('life') - damage);
-			if(type === 1){ // レーザー
+			if (type === 1) {
+				// レーザー
 			} else {
 				jikiSh[i].hide().stop();
 			}
@@ -414,13 +476,14 @@ function hitJikiSh(sprite, type, num, jikiSh, damage) {
 }
 
 function banSprite(sprite) {
-	if(sprite.get('tag') !== 'boss') { // BOSSのときはスルー
+	if (sprite.get('tag') !== 'boss') {
+		// BOSSのときはスルー
 		state.numTeki--;
 	}
 	setTxtScore(sprite.get('score'));
 	sprite.stop();
 	sprite.set('image', 'gfx/ban.gif');
-	setTimeout(function() {
+	setTimeout(function () {
 		sprite.remove();
 	}, BAN_DURATION_MS);
 }
@@ -429,7 +492,7 @@ function touchJiki(sprite) {
 	if (state.muteki) return; // デバッグ用無敵
 	if (!sprite.isTouching(jiki)) return;
 	if (!isFight()) return;
-	if(sprite.get('group') === groupPwr) {
+	if (sprite.get('group') === groupPwr) {
 		sprite.remove();
 		if (sprite.get('n') === 0) chJikiSh();
 		else if (sprite.get('n') === 1) chVelJiki();
@@ -462,7 +525,7 @@ export function rmGroupTeki() {
 		DGE.Sprite.execByProperty('group', groupBossSh, 'remove');
 	}
 	state.bombTeki = 1;
-	setTimeout(function() {
+	setTimeout(function () {
 		state.bombTeki = 0;
 	}, BOMB_DURATION_MS);
 }
@@ -477,40 +540,28 @@ export function makeBossSh1(num) {
 	let angBossSh;
 	let xBossSh;
 	let yBossSh;
-	if ((num % 2) === 0) {
-		angBossSh = (num) * 10;
+	if (num % 2 === 0) {
+		angBossSh = num * 10;
 		xBossSh = 65;
 		yBossSh = 55;
 	} else {
-		angBossSh = (num) * -10;
+		angBossSh = num * -10;
 		xBossSh = 205;
 		yBossSh = 35;
 	}
 
 	new DGE.Sprite({
-		image : 'gfx/teki/60/s1.gif', width : wBossSh, height : hBossSh,
-		x : boss.x + xBossSh, y : boss.y + yBossSh, z : 2,
-		velocity : velBossSh, angle : angBossSh,
-		group : groupBossSh
+		image: 'gfx/teki/60/s1.gif',
+		width: wBossSh,
+		height: hBossSh,
+		x: boss.x + xBossSh,
+		y: boss.y + yBossSh,
+		z: 2,
+		velocity: velBossSh,
+		angle: angBossSh,
+		group: groupBossSh,
 	})
-	.on('ping', function() {
-		if (!this.get('active')) return;
-		if (this.isOutOfBounds(true)) {
-			this.remove();
-			return;
-		}
-		touchJiki(this);
-	})
-	.start();
-
-	if ((num % 30) === 0 && stepFlg === STEP_BATTLE) {
-		new DGE.Sprite({
-			image : 'gfx/teki/60/s2.gif', width : 128, height : 2,
-			x : boss.x - 120, y : boss.y + 45, z : 2,
-			velocity : 4, angle : 10,
-			group : groupBossSh
-		})
-		.on('ping', function() {
+		.on('ping', function () {
 			if (!this.get('active')) return;
 			if (this.isOutOfBounds(true)) {
 				this.remove();
@@ -519,6 +570,28 @@ export function makeBossSh1(num) {
 			touchJiki(this);
 		})
 		.start();
+
+	if (num % 30 === 0 && stepFlg === STEP_BATTLE) {
+		new DGE.Sprite({
+			image: 'gfx/teki/60/s2.gif',
+			width: 128,
+			height: 2,
+			x: boss.x - 120,
+			y: boss.y + 45,
+			z: 2,
+			velocity: 4,
+			angle: 10,
+			group: groupBossSh,
+		})
+			.on('ping', function () {
+				if (!this.get('active')) return;
+				if (this.isOutOfBounds(true)) {
+					this.remove();
+					return;
+				}
+				touchJiki(this);
+			})
+			.start();
 	}
 }
 

@@ -13,21 +13,21 @@ export function newTxtAlert(text) {
 		return;
 	}
 	txtAlert = new DGE.Text({
-		font : FONT,
-		text : text,
-		width : 100,
-		height : 20,
-		x : 280,
-		y : 160,
-		z : 3
+		font: FONT,
+		text: text,
+		width: 100,
+		height: 20,
+		x: 280,
+		y: 160,
+		z: 3,
 	});
 }
 
 export function setTxtAlert(text, x, y, state) {
 	txtAlert.set('text', text);
-	if(state === STATE_SET) {
+	if (state === STATE_SET) {
 		txtAlert.plot(x, y);
-	}else if(state === STATE_SHOW) {
+	} else if (state === STATE_SHOW) {
 		txtAlert.plot(x, y).show();
 	}
 }
@@ -36,9 +36,14 @@ export function setTxtAlert(text, x, y, state) {
 
 export function newTxtScore(text) {
 	txtScore = new DGE.Text({
-		font : FONT, text : text, width : 200, height : 20,
-		x : 5, y : 5, z : 3,
-		points : 0
+		font: FONT,
+		text: text,
+		width: 200,
+		height: 20,
+		x: 5,
+		y: 5,
+		z: 3,
+		points: 0,
 	});
 }
 
@@ -51,12 +56,12 @@ export function setTxtScore(i) {
 
 export function newTxtStage(text) {
 	txtStage = new DGE.Text({
-		font : FONT,
-		text : text,
-		width : 55,
-		height : 20,
-		x : 545,
-		y : 5,
-		z : 3
+		font: FONT,
+		text: text,
+		width: 55,
+		height: 20,
+		x: 545,
+		y: 5,
+		z: 3,
 	});
 }

@@ -4,7 +4,6 @@ import { setTxtScore } from './text.js';
 import { STEP_COME, STEP_BATTLE, stepFlg, isFight, goBattle, goLose } from './step.js';
 import { chJikiSh, chVelJiki, rmGroupTeki } from './set.js';
 
-let bg;
 export let logo;
 
 export let jiki;
@@ -41,7 +40,7 @@ let turn;
 // --------------------------------------------------
 
 export function newSpriteBg() {
-	bg = new DGE.Sprite({
+	new DGE.Sprite({
 		image : 'gfx/bg.gif', width : 1920, height : 320,
 		x : 0, y : DGE.stage.height - 320, z : 1,
 		velocity : 2, angle : 0

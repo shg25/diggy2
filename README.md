@@ -18,11 +18,18 @@ python3 -m http.server 8720
 - タイトル画面でキーを押すとゲーム開始
 - 矢印キーで移動、Z / スペースで射撃
 
+## 開発
+
+```sh
+npm install   # 開発ツール(ESLint)のインストール
+npm run lint  # コード検査
+```
+
 ## ディレクトリ構成
 
 ```
 index.html   ゲームの入口
-js/          ゲーム本体のコード
+js/          ゲーム本体のコード（ES modules、エントリは js/ridge.js）
 gfx/         画像アセット（jiki=自機, teki=敵）
 lib/diggy/   Diggyエンジン（Matt Hackett作・借り物なので原則いじらない）
 docs/        リファクタリングのレッスン集

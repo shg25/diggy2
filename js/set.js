@@ -1,33 +1,8 @@
-import { BOMB_DURATION_MS } from './const.js';
 import { state } from './state.js';
-import { jiki, boss, groupBossSh, jikiSh1, jikiSh2, jikiSh3, numJikiSh1, numJikiSh2, numJikiSh3 } from './sprite.js';
-import { STEP_TITLE, stepFlg, isPlay, goReady } from './step.js';
+import { jiki, jikiSh1, jikiSh2, jikiSh3, numJikiSh1, numJikiSh2, numJikiSh3, chJikiSh, chVelJiki, rmGroupTeki } from './sprite.js';
+import { STEP_TITLE, stepFlg, isPlay } from './flow.js';
+import { goReady } from './step.js';
 import { changeStage } from './stage.js';
-
-// ショット変更
-export function chJikiSh() {
-	if (state.jikiShFlg !== 3) state.jikiShFlg += 1;
-	else state.jikiShFlg = 0;
-}
-
-// スピード変更
-export function chVelJiki() {
-	if (state.velJiki === 5) state.velJiki = 10;
-	else if (state.velJiki === 10) state.velJiki = 30;
-	else if (state.velJiki === 30) state.velJiki = 1;
-	else if (state.velJiki === 1) state.velJiki = 5;
-}
-
-// ボム
-export function rmGroupTeki() {
-	if (boss.get('active')) {
-		DGE.Sprite.execByProperty('group', groupBossSh, 'remove');
-	}
-	state.bombTeki = 1;
-	setTimeout(function() {
-		state.bombTeki = 0;
-	}, BOMB_DURATION_MS);
-}
 
 // --------------------------------------------------
 // ショット撃つ

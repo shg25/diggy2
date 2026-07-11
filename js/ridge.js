@@ -2,6 +2,7 @@
 import { init } from './step.js';
 import { eventKeyDown } from './set.js';
 import { state } from './state.js';
+import * as flow from './flow.js';
 import * as step from './step.js';
 import * as sprite from './sprite.js';
 import * as text from './text.js';
@@ -16,14 +17,14 @@ DGE.Keyboard.on('keyDown', function(keyCode) { eventKeyDown(keyCode); });
 window.ridge = {
 	debug : {
 		state : state,
-		get stepFlg() { return step.stepFlg; },
+		get stepFlg() { return flow.stepFlg; },
 		get boss() { return sprite.boss; },
 		get jiki() { return sprite.jiki; },
 		get bossTurnMode() { return sprite.bossTurnMode; },
 		get score() { return text.txtScore ? text.txtScore.get('points') : 0; },
 		get poolSizes() { return [sprite.jikiSh1.length, sprite.jikiSh2.length, sprite.jikiSh3.length]; },
-		isPlay : step.isPlay,
-		isFightBoss : step.isFightBoss,
+		isPlay : flow.isPlay,
+		isFightBoss : flow.isFightBoss,
 		goWin : step.goWin,
 		goLose : step.goLose,
 		makePwr : sprite.makePwr,

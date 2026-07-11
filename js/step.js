@@ -1,51 +1,12 @@
+import { STEP_TITLE, STEP_RETURN, STEP_READY, STEP_START, STEP_COME, STEP_BATTLE, STEP_WIN, STEP_LOSE, setStep, transitions } from './flow.js';
 import { STATE_SET, STATE_SHOW, txtAlert, txtScore, newTxtAlert, setTxtAlert, newTxtScore, setTxtScore, newTxtStage } from './text.js';
 import { logo, jiki, newSpriteBg, newSpriteLogo, newSpriteJiki, defineJikiSh, removeJiki, getoutBoss, resetSprite, newSpriteBoss } from './sprite.js';
 import { moveJiki, startStage, stopStage } from './stage.js';
 
-export let stepFlg = 0;
-
-export const STEP_TITLE  = 0;
-export const STEP_RETURN = 1;
-export const STEP_READY  = 10;
-export const STEP_START  = 11;
-export const STEP_COME   = 12;
-export const STEP_BATTLE = 13;
-export const STEP_WIN    = 14;
-export const STEP_LOSE   = 19;
-
-export function isPlay() {
-	if(stepFlg === STEP_READY || stepFlg === STEP_START || stepFlg === STEP_COME || stepFlg === STEP_BATTLE || stepFlg === STEP_WIN) {
-		return true;
-	}
-	return false;
-}
-
-export function isFight() {
-	if(stepFlg === STEP_START || stepFlg === STEP_COME || stepFlg === STEP_BATTLE) {
-		return true;
-	}
-	return false;
-}
-
-export function isFightBoss() {
-	if(stepFlg === STEP_COME || stepFlg === STEP_BATTLE) {
-		return true;
-	}
-	return false;
-}
-
-function setStep(step) {
-	stepFlg = step;
-	if (step === STEP_TITLE) console.log('goTitle');
-	else if (step === STEP_RETURN) console.log('goReturn');
-	else if (step === STEP_READY) console.log('goReady');
-	else if (step === STEP_START) console.log('goStart');
-	else if (step === STEP_COME) console.log('goCome');
-	else if (step === STEP_BATTLE) console.log('goBattle');
-	else if (step === STEP_WIN) console.log('goWin');
-	else if (step === STEP_LOSE) console.log('goLose');
-	else console.log('go????');
-}
+// 下位レイヤーが発火する場面遷移に、実体を結びつける
+transitions.come = goCome;
+transitions.battle = goBattle;
+transitions.lose = goLose;
 
 // --------------------------------------------------
 // 初期設定

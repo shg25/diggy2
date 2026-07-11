@@ -1,8 +1,7 @@
-import { BAN_DURATION_MS } from './const.js';
+import { BAN_DURATION_MS, BOMB_DURATION_MS } from './const.js';
 import { state } from './state.js';
 import { setTxtScore } from './text.js';
-import { STEP_COME, STEP_BATTLE, stepFlg, isFight, goBattle, goLose } from './step.js';
-import { chJikiSh, chVelJiki, rmGroupTeki } from './set.js';
+import { STEP_COME, STEP_BATTLE, stepFlg, isFight, transitions } from './flow.js';
 
 export let logo;
 
@@ -145,7 +144,7 @@ export function newSpriteBoss() {
 						bossTurn = "l";
 					}
 					bossTurnMode = 0;
-					goBattle();
+					transitions.battle();
 				}
 			} // STEP_COME
 
@@ -197,7 +196,7 @@ export function newSpriteBoss() {
 			}
 			if (stepFlg === STEP_COME && this.x >= 310) { // 後進
 				this.set('angle', 90);
-				goBattle();
+				transitions.battle();
 			}
 			if (stepFlg === STEP_BATTLE) { // 上下移動
 				if (this.y <= 50) this.set('angle', 270);
@@ -436,8 +435,36 @@ function touchJiki(sprite) {
 		else if (sprite.get('n') === 1) chVelJiki();
 		else rmGroupTeki();
 	} else {
-		goLose();
+		transitions.lose();
 	}
+}
+
+// --------------------------------------------------
+// パワーアップ効果(アイテム取得と隠しコマンドの両方から使われる)
+
+// ショット変更
+export function chJikiSh() {
+	if (state.jikiShFlg !== 3) state.jikiShFlg += 1;
+	else state.jikiShFlg = 0;
+}
+
+// スピード変更
+export function chVelJiki() {
+	if (state.velJiki === 5) state.velJiki = 10;
+	else if (state.velJiki === 10) state.velJiki = 30;
+	else if (state.velJiki === 30) state.velJiki = 1;
+	else if (state.velJiki === 1) state.velJiki = 5;
+}
+
+// ボム
+export function rmGroupTeki() {
+	if (boss.get('active')) {
+		DGE.Sprite.execByProperty('group', groupBossSh, 'remove');
+	}
+	state.bombTeki = 1;
+	setTimeout(function() {
+		state.bombTeki = 0;
+	}, BOMB_DURATION_MS);
 }
 
 // --------------------------------------------------

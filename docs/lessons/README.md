@@ -25,3 +25,4 @@
 | 14 | [依存は一方通行に — レイヤー分けと依存性逆転](14-layering.md) | `2c95d4f` |
 | 15 | [検証を資産に — テストコード](15-tests.md) | `e498497` |
 | 16 | [自動化の門番 — git hooks と CI](16-automation.md) | `d5ada19` |
+| 17 | [見た目の議論を終わらせる — Prettier](17-formatter.md) | `bb2b735` |

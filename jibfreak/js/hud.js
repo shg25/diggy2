@@ -2,6 +2,7 @@
 // classic はスコアを DGE.Text の points プロパティに住まわせていたが、
 // 新版では表示(このファイル)とデータ(score変数)を素直に分ける。
 import { WIDTH } from './engine/screen.js';
+import { state } from './state.js';
 
 let score = 0;
 
@@ -25,5 +26,5 @@ export function drawHud(ctx) {
 	ctx.textAlign = 'left';
 	ctx.fillText(`Score: ${score.toLocaleString()}`, 5, 15);
 	ctx.textAlign = 'right';
-	ctx.fillText('STAGE 1', WIDTH - 5, 15);
+	ctx.fillText(`STAGE ${state.stageFlg}`, WIDTH - 5, 15);
 }

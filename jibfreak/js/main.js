@@ -33,7 +33,7 @@ import {
 	chVelJiki,
 	countActiveShots,
 } from './player.js';
-import { tekis, resetTekis, drawTekis, rmGroupTeki } from './enemies.js';
+import { tekis, teki2, resetTekis, drawTekis, rmGroupTeki } from './enemies.js';
 import { pwrs, resetPwrs, drawPwrs } from './items.js';
 import {
 	boss,
@@ -45,7 +45,9 @@ import {
 	BOSS_IMAGE,
 	BOSS_SH_IMAGE,
 	BOSS_LASER_IMAGE,
+	BOSS2_IMAGES,
 } from './boss.js';
+import { changeStage } from './stage.js';
 import { updateStage, resetStage } from './stage.js';
 import { resetScore, getScore, drawHud } from './hud.js';
 
@@ -69,9 +71,11 @@ TEKI1_DEFS.forEach((_, n) => {
 PWR_DEFS.forEach((_, n) => {
 	sources[`gfx/teki/${n + 80}/l.gif`] = `gfx/teki/${n + 80}/l.gif`;
 });
-for (const key of [BOSS_IMAGE, BOSS_SH_IMAGE, BOSS_LASER_IMAGE]) {
+for (const key of [BOSS_IMAGE, BOSS_SH_IMAGE, BOSS_LASER_IMAGE, ...BOSS2_IMAGES]) {
 	sources[key] = key;
 }
+sources['gfx/teki/20/l.gif'] = 'gfx/teki/20/l.gif'; // とぅと郎
+sources['gfx/teki/20/r.gif'] = 'gfx/teki/20/r.gif';
 const images = await loadImages(sources);
 
 // 背景の絵柄は960pxで一周する(classicと同じ素材・同じ周期)
@@ -144,6 +148,7 @@ startLoop({
 		bgX = (bgX + BG_SPEED * dt) % BG_PERIOD;
 
 		if (flow.stepFlg === STEP_TITLE) {
+			if (wasPressed('speed')) changeStage(); // タイトルで S = ステージ切替(classic)
 			if (wasPressed('action')) {
 				// classic の goReady 相当: スコアを戻し、2秒の READY? を挟んで開始
 				resetScore();
@@ -242,7 +247,7 @@ window.jibfreak = {
 			return countActiveShots();
 		},
 		get enemyCount() {
-			return tekis.length;
+			return tekis.length + (teki2 ? 1 : 0);
 		},
 		get pwrCount() {
 			return pwrs.length;

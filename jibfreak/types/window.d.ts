@@ -8,7 +8,7 @@ interface Window {
 			readonly activeShots: number;
 			readonly enemyCount: number;
 			readonly pwrCount: number;
-			readonly boss: { x: number; y: number; life: number } | null;
+			readonly boss: { x: number; y: number; life: number; turnMode: number } | null;
 			readonly bossShotCount: number;
 			readonly score: number;
 		};

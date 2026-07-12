@@ -17,15 +17,41 @@ import { BAN_IMAGE } from './defs.js';
 export const BOSS_IMAGE = 'gfx/teki/60/l.gif';
 export const BOSS_SH_IMAGE = 'gfx/teki/60/s1.gif';
 export const BOSS_LASER_IMAGE = 'gfx/teki/60/s2.gif';
+// 2面ボス(猫バス)と弾の画像
+export const BOSS2_IMAGES = [
+	'gfx/teki/61/l.gif',
+	'gfx/teki/61/r.gif',
+	'gfx/teki/61/l_1.gif',
+	'gfx/teki/61/l_2.gif',
+	'gfx/teki/61/l_3.gif',
+	'gfx/teki/61/s0.gif',
+	'gfx/teki/61/s1.gif',
+];
 
 const TICK = 1 / FPS;
 
-/** @typedef {import('./entity.js').Entity & { life: number, score: number, dieTimer: number }} Boss */
+/**
+ * @typedef {import('./entity.js').Entity & {
+ *   life: number, score: number, dieTimer: number,
+ *   n: number, turnDir: 'r' | 'l', turnMode: number
+ * }} Boss
+ * n: ステージ番号-1。turnDir/turnMode: 2面の暴れ状態。
+ * classic ではグローバル変数(bossTurn/bossTurnMode)だったが、
+ * ボス自身の状態なのでボスに持たせる
+ */
 
 /** @type {Boss | null} */
 export let boss = null;
 
-/** @type {import('./entity.js').Entity[]} ボス弾(classic の groupBossSh) */
+/**
+ * @typedef {import('./entity.js').Entity & {
+ *   n?: number, life?: number, homing?: 'charging' | 'done'
+ * }} BossShot
+ * homing: 2面の追尾弾の状態。classic では全弾共有のグローバル turn
+ * だったが(レッスン03で指摘した wart)、弾ごとに持つ
+ */
+
+/** @type {BossShot[]} ボス弾(classic の groupBossSh) */
 export const bossShots = [];
 
 export function resetBoss() {
@@ -38,9 +64,10 @@ export function clearBossShots() {
 	bossShots.length = 0;
 }
 
-// ボス登場(classic の newSpriteBoss の1面分)
+// ボス登場(classic の newSpriteBoss から移植)
 export function spawnBoss() {
-	const def = BOSS_DEFS[0];
+	const n = state.stageFlg !== 1 ? 1 : 0;
+	const def = BOSS_DEFS[n];
 	boss = {
 		x: def.x,
 		y: def.y,
@@ -49,15 +76,19 @@ export function spawnBoss() {
 		velocity: def.velocity,
 		angle: def.angle,
 		active: true,
-		imageKey: BOSS_IMAGE,
+		imageKey: `gfx/teki/${n + 60}/l.gif`,
 		life: 20,
 		score: 5000,
 		dieTimer: 0,
+		n,
+		turnDir: 'l',
+		turnMode: 0,
 	};
 }
 
-/** 負けたときボスが飛び去る(classic の getoutBoss) */
+/** 負けたときボスが飛び去る(classic の getoutBoss。1面のみ) */
 export function getoutBoss() {
+	if (state.stageFlg !== 1) return;
 	if (boss && boss.dieTimer === 0) boss.angle = 20;
 }
 
@@ -148,7 +179,8 @@ export function tickBoss() {
 			if (boss.dieTimer <= 0) boss = null;
 		} else {
 			advance(boss, TICK);
-			if (isOutOfBounds(boss)) {
+			// 画面外で消えるのは1面のみ(2面の猫バスは画面外まで往復する仕様)
+			if (boss.n === 0 && isOutOfBounds(boss)) {
 				boss = null; // 飛び去った(classic の remove)
 			} else {
 				// 後方ショット(jikiSh2)はボスに当たらない仕様
@@ -156,16 +188,8 @@ export function tickBoss() {
 				if (boss) hitJikiSh(boss, true, jikiSh3, 0.2);
 				if (boss && boss.dieTimer === 0) {
 					touchJiki(boss);
-					if (stepFlg === STEP_COME && boss.x >= 310) {
-						// 後進
-						boss.angle = 90;
-						transitions.battle();
-					}
-					if (stepFlg === STEP_BATTLE) {
-						// 上下移動
-						if (boss.y <= 50) boss.angle = 270;
-						if (boss.y >= 300) boss.angle = 90;
-					}
+					if (boss.n === 0) tickBoss1(boss);
+					else tickBoss2(boss);
 				}
 			}
 		}
@@ -178,8 +202,127 @@ export function tickBoss() {
 			bossShots.splice(i, 1);
 			continue;
 		}
+		// 2面の追尾弾: 20フレームためてから自機へ向き直り3倍速(classic)
+		if (s.homing === 'charging' && s.life !== undefined) {
+			if (s.life >= 0) {
+				s.life -= 1;
+				continue; // ため中は当たらない(classic の return)
+			}
+			s.angle = aimAtJiki(s.x, s.y);
+			s.velocity = s.velocity * 3;
+			s.homing = 'done';
+			continue;
+		}
 		touchJiki(s);
 	}
+}
+
+/** 1面ボスの動き(classic の ping の1面分岐) @param {Boss} b */
+function tickBoss1(b) {
+	if (stepFlg === STEP_COME && b.x >= 310) {
+		// 後進
+		b.angle = 90;
+		transitions.battle();
+	}
+	if (stepFlg === STEP_BATTLE) {
+		// 上下移動
+		if (b.y <= 50) b.angle = 270;
+		if (b.y >= 300) b.angle = 90;
+	}
+}
+
+/** 2面ボス(猫バス)の動き(classic の ping の2面分岐) @param {Boss} b */
+function tickBoss2(b) {
+	if (stepFlg === STEP_COME) {
+		// 左右往復
+		if (b.x <= -222) {
+			b.imageKey = 'gfx/teki/61/r.gif';
+			b.angle = 180;
+		}
+		if (b.x >= 600) {
+			b.imageKey = 'gfx/teki/61/l.gif';
+			b.angle = 0;
+		}
+		// 暴れます(classic)
+		if (b.life <= 10) {
+			b.turnDir = b.angle === 180 ? 'r' : 'l';
+			b.turnMode = 0;
+			transitions.battle();
+		}
+	}
+	if (stepFlg === STEP_BATTLE) {
+		// 暴れる: 画面の縁を回る
+		if (b.turnDir === 'r') {
+			// 反時計回り(右端で向き直って時計回りへ)
+			if (b.x >= 600) {
+				b.imageKey = 'gfx/teki/61/l.gif';
+				b.angle = 0;
+				b.turnDir = 'l';
+			}
+		}
+		if (b.turnDir === 'l') {
+			// 時計回り
+			if (b.turnMode === 0 && b.x <= 0) {
+				b.angle = 90;
+				b.width = 120;
+				b.height = 222;
+				b.imageKey = 'gfx/teki/61/l_1.gif';
+				b.turnMode = 1;
+			}
+			if (b.turnMode === 1 && b.y <= 0) {
+				b.angle = 180;
+				b.width = 222;
+				b.height = 120;
+				b.imageKey = 'gfx/teki/61/l_2.gif';
+				b.turnMode = 2;
+			}
+			if (b.turnMode === 2 && b.x >= 400) {
+				b.angle = 270;
+				b.width = 120;
+				b.height = 222;
+				b.x = 480;
+				b.imageKey = 'gfx/teki/61/l_3.gif';
+				b.turnMode = 3;
+			}
+			if (b.turnMode === 3 && b.y >= 178) {
+				b.angle = 0;
+				b.width = 222;
+				b.height = 120;
+				b.y = 270;
+				b.imageKey = 'gfx/teki/61/l.gif';
+				b.turnMode = 0;
+			}
+		}
+	}
+}
+
+/**
+ * 自機へ向く角度(classic の atan2 計算。Diggy の角度規約に合わせ両成分を反転)
+ * @param {number} x
+ * @param {number} y
+ */
+function aimAtJiki(x, y) {
+	return (Math.atan2((jiki.y - y) * -1, (jiki.x - x) * -1) * 180) / Math.PI;
+}
+
+// 2面のボス弾(classic の newSpriteBossSh2 から移植) [0]:直進弾 [1]:追尾弾
+/** @param {number} num */
+export function makeBossSh2(num) {
+	if (!boss || boss.dieTimer > 0) return;
+	const velocities = [10, 5];
+	bossShots.push({
+		x: boss.x + 60,
+		y: boss.y + 60,
+		width: 16,
+		height: 16,
+		velocity: velocities[num],
+		angle: aimAtJiki(boss.x, boss.y),
+		active: true,
+		imageKey: `gfx/teki/61/s${num}.gif`,
+		n: num,
+		life: 20,
+		homing: num === 1 ? 'charging' : undefined,
+	});
 }
 
 /**

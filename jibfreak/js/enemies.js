@@ -23,10 +23,14 @@ import { boss, clearBossShots } from './boss.js';
 /** @type {Teki[]} */
 export const tekis = [];
 
+/** @type {(Teki & { turn: 'up' | 'down' }) | null} 2面の敵「とぅと郎」。1体だけ */
+export let teki2 = null;
+
 const TICK = 1 / FPS;
 
 export function resetTekis() {
 	tekis.length = 0;
+	teki2 = null;
 	state.numTeki = 0;
 }
 
@@ -112,6 +116,59 @@ function touchJiki(t) {
 	transitions.lose();
 }
 
+// とぅと郎(classic の newSpriteTeki2 から移植)。
+// classic はとぅと郎を numTeki に数え入れないのに撃破時に減らす非対称が
+// あった(実害なし・温存)。新築では生成する者が数える。
+export function spawnTeki2() {
+	teki2 = {
+		x: 599,
+		y: 200,
+		width: 32,
+		height: 32,
+		velocity: 5,
+		angle: 0,
+		active: true,
+		imageKey: 'gfx/teki/20/l.gif',
+		life: 90,
+		score: 5000,
+		dieTimer: 0,
+		turn: 'up',
+	};
+	state.numTeki++;
+}
+
+// classic の moveTeki2 + とぅと郎の ping 相当(30Hzで呼ぶ)
+export function tickTeki2() {
+	if (!teki2) return;
+	if (teki2.dieTimer > 0) {
+		teki2.dieTimer -= TICK;
+		if (teki2.dieTimer <= 0) teki2 = null;
+		return;
+	}
+
+	// 首振り(classic の moveTeki2)
+	if (teki2.angle >= 80) teki2.turn = 'down';
+	else if (teki2.angle <= -80) teki2.turn = 'up';
+	if (teki2.turn === 'up') teki2.angle += 5;
+	else teki2.angle -= 5;
+	if (teki2.x >= 500) {
+		teki2.velocity = 5;
+		teki2.imageKey = 'gfx/teki/20/l.gif';
+	} else if (teki2.x <= 100) {
+		teki2.velocity = -5;
+		teki2.imageKey = 'gfx/teki/20/r.gif';
+	}
+
+	advance(teki2, TICK);
+	if (isOutOfBounds(teki2)) {
+		state.numTeki--;
+		teki2 = null;
+		return;
+	}
+	hitAllJikiSh(teki2, 0.8);
+	if (teki2 && teki2.dieTimer === 0) touchJiki(teki2);
+}
+
 // ボム(classic の rmGroupTeki から移植)。BOMB_DURATION_MS の間、
 // 雑魚が触れただけで消えるフラグを立てる。ボス弾の消去はボス移植時に追加
 export function rmGroupTeki() {
@@ -124,8 +181,8 @@ export function rmGroupTeki() {
 
 // 30Hz の1フレーム分(classic の stage1 interval + 各スプライトの ping 相当)
 export function tickTekis() {
-	// 湧き: 敵が0なら必ず、それ以外は毎フレーム 1/TEKI1_SPAWN_RATE の確率
-	if (isFight()) {
+	// 湧き: 敵が0なら必ず、それ以外は毎フレーム 1/TEKI1_SPAWN_RATE の確率(1面のみ)
+	if (isFight() && state.stageFlg === 1) {
 		if (state.numTeki === 0 || randInt(1, TEKI1_SPAWN_RATE) === 1) spawnTeki1();
 	}
 
@@ -165,5 +222,8 @@ export function tickTekis() {
 export function drawTekis(ctx, images) {
 	for (const t of tekis) {
 		ctx.drawImage(images[t.imageKey], Math.round(t.x), Math.round(t.y));
+	}
+	if (teki2) {
+		ctx.drawImage(images[teki2.imageKey], Math.round(teki2.x), Math.round(teki2.y));
 	}
 }

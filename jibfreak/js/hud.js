@@ -3,16 +3,33 @@
 // 新版では表示(このファイル)とデータ(score変数)を素直に分ける。
 import { WIDTH } from './engine/screen.js';
 import { state } from './state.js';
+import { loadHiScore, saveHiScore } from './storage.js';
 
 let score = 0;
+let hiScore = loadHiScore();
+let newRecord = false; // このゲームで自己ベストを更新したか
 
 /** @param {number} n 加算する点数 */
 export function addScore(n) {
 	score += n;
+	if (score > hiScore) {
+		hiScore = score;
+		newRecord = true;
+		saveHiScore(hiScore); // 超えた瞬間に保存(途中でタブを閉じても残る)
+	}
 }
 
 export function resetScore() {
 	score = 0;
+	newRecord = false;
+}
+
+export function getHiScore() {
+	return hiScore;
+}
+
+export function isNewRecord() {
+	return newRecord;
 }
 
 export function getScore() {
@@ -25,6 +42,8 @@ export function drawHud(ctx) {
 	ctx.font = '10px Verdana, sans-serif';
 	ctx.textAlign = 'left';
 	ctx.fillText(`Score: ${score.toLocaleString()}`, 5, 15);
+	// 20年前のスタブ(newTxtHiScore)が予約していた位置 x:5, y:25 に置く
+	ctx.fillText(`Hi-Score: ${hiScore.toLocaleString()}`, 5, 28);
 	ctx.textAlign = 'right';
 	ctx.fillText(`STAGE ${state.stageFlg}`, WIDTH - 5, 15);
 }

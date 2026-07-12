@@ -2,15 +2,26 @@
 // プールの選び方・発射位置・レーザーの3方向展開は classic のアルゴリズムのまま。
 // 変わったのは「DGEスプライト → ただのオブジェクト」と「フレーム基準 → 時間基準」。
 import { state } from './state.js';
-import { FPS } from './const.js';
+import { FPS, BAN_DURATION_MS } from './const.js';
 import { JIKI_SH_DEFS } from './defs.js';
 import { advance, isOutOfBounds, drawEntity } from './entity.js';
 import { WIDTH, HEIGHT } from './engine/screen.js';
 import { isDown } from './engine/input.js';
 
 export const JIKI_IMAGE = 'gfx/jiki/n.gif';
+const BAN_IMAGE = 'gfx/ban.gif';
 
 export const jiki = { x: WIDTH / 2 - 16, y: HEIGHT / 2 - 16, width: 32, height: 32 };
+
+/** @type {'alive' | 'ban' | 'gone'} 被弾すると ban(やられ演出) → gone */
+let jikiState = 'alive';
+let banTimer = 0;
+
+/** 被弾(classic の removeJiki 相当: ban.gif を出してから消える) */
+export function killJiki() {
+	jikiState = 'ban';
+	banTimer = BAN_DURATION_MS / 1000;
+}
 
 const NUM_SHOTS = 3; // classic の numJikiSh1/2/3 と同じ
 
@@ -37,6 +48,8 @@ export const jikiSh3 = makePool(JIKI_SH_DEFS[2]);
 
 /** 自機を初期位置に戻す */
 export function resetJiki() {
+	jikiState = 'alive';
+	banTimer = 0;
 	jiki.x = WIDTH / 2 - 16;
 	jiki.y = HEIGHT / 2 - 16;
 	for (const pool of [jikiSh1, jikiSh2, jikiSh3]) {
@@ -116,10 +129,10 @@ function startJikiSh(shot, type) {
 // --------------------------------------------------
 
 /**
- * 自機の移動(classic の stage.js moveJiki から移植)とショットの前進。
+ * 自機の移動(classic の stage.js moveJiki から移植)。操作可能なときだけ呼ぶ。
  * @param {number} dt 経過秒
  */
-export function updatePlayer(dt) {
+export function moveJikiByInput(dt) {
 	const step = state.velJiki * FPS * dt; // classic: velJiki px/フレーム(30fps)
 	if (isDown('up')) {
 		jiki.y -= step;
@@ -137,7 +150,17 @@ export function updatePlayer(dt) {
 		jiki.x += step;
 		if (jiki.x >= WIDTH - jiki.width) jiki.x = WIDTH - jiki.width;
 	}
+}
 
+/**
+ * ショットの前進とやられ演出の進行。どの場面でも毎フレーム呼ぶ。
+ * @param {number} dt 経過秒
+ */
+export function updateShots(dt) {
+	if (jikiState === 'ban') {
+		banTimer -= dt;
+		if (banTimer <= 0) jikiState = 'gone';
+	}
 	for (const pool of [jikiSh1, jikiSh2, jikiSh3]) {
 		for (const shot of pool) {
 			if (!shot.active) continue;
@@ -155,7 +178,11 @@ export function drawPlayer(ctx, images) {
 	for (const pool of [jikiSh1, jikiSh2, jikiSh3]) {
 		for (const shot of pool) drawEntity(ctx, images, shot);
 	}
-	ctx.drawImage(images[JIKI_IMAGE], Math.round(jiki.x), Math.round(jiki.y));
+	if (jikiState === 'alive') {
+		ctx.drawImage(images[JIKI_IMAGE], Math.round(jiki.x), Math.round(jiki.y));
+	} else if (jikiState === 'ban') {
+		ctx.drawImage(images[BAN_IMAGE], Math.round(jiki.x), Math.round(jiki.y));
+	}
 }
 
 /** 検証用: いま画面にあるショット数 */

@@ -6,6 +6,8 @@ interface Window {
 			state: Record<string, number | boolean>;
 			jiki: { x: number; y: number; width: number; height: number };
 			readonly activeShots: number;
+			readonly enemyCount: number;
+			readonly score: number;
 		};
 	};
 }

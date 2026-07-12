@@ -1,38 +1,49 @@
 // JIB-FREAK MOBILE エントリポイント。
-// タイトル → READY → START(自機を操作して撃てる)まで移植済み。
-// 敵・アイテム・ボスはこれから。
+// タイトル → READY → START(戦闘) → LOSE(GAME OVER) → タイトル、まで移植済み。
+// アイテム・ボス・勝利はこれから。
 // flow.js / state.js / const.js は classic から1文字も変えずに使っている。
 import { createScreen, WIDTH, HEIGHT } from './engine/screen.js';
 import { startLoop } from './engine/loop.js';
 import { initInput, wasPressed, flushInput } from './engine/input.js';
 import { loadImages } from './engine/assets.js';
-import { STEP_TITLE, STEP_READY, STEP_START, setStep } from './flow.js';
+import { STEP_TITLE, STEP_READY, STEP_START, STEP_LOSE, setStep, transitions } from './flow.js';
 import * as flow from './flow.js';
 import { state } from './state.js';
-import { JIKI_SH_DEFS } from './defs.js';
+import { JIKI_SH_DEFS, TEKI1_DEFS } from './defs.js';
 import {
 	jiki,
 	JIKI_IMAGE,
 	resetJiki,
-	updatePlayer,
+	killJiki,
+	moveJikiByInput,
+	updateShots,
 	drawPlayer,
 	makeJikiSh,
 	chJikiSh,
 	chVelJiki,
 	countActiveShots,
 } from './player.js';
+import { tekis, resetTekis, updateTekis, drawTekis, BAN_IMAGE } from './enemies.js';
+import { resetScore, getScore, drawHud } from './hud.js';
 
 const parent = document.getElementById('screen');
 if (!parent) throw new Error('#screen がない');
 const ctx = createScreen(parent);
 initInput();
 
-const images = await loadImages({
+/** @type {Record<string, string>} */
+const sources = {
 	'gfx/bg.gif': 'gfx/bg.gif',
 	[JIKI_IMAGE]: JIKI_IMAGE,
+	[BAN_IMAGE]: BAN_IMAGE,
 	[JIKI_SH_DEFS[0].image]: JIKI_SH_DEFS[0].image,
 	[JIKI_SH_DEFS[2].image]: JIKI_SH_DEFS[2].image,
+};
+TEKI1_DEFS.forEach((_, n) => {
+	sources[`gfx/teki/${n}/l.gif`] = `gfx/teki/${n}/l.gif`;
+	sources[`gfx/teki/${n}/r.gif`] = `gfx/teki/${n}/r.gif`;
 });
+const images = await loadImages(sources);
 
 // 背景の絵柄は960pxで一周する(classicと同じ素材・同じ周期)
 const BG_PERIOD = 960;
@@ -42,6 +53,26 @@ let bgX = 0;
 let time = 0;
 let stepTimer = 0;
 let goTimer = 0;
+let loseTimer = 0;
+
+// 被弾 → GAME OVER(classic の goLose 相当)。
+// 敵の当たり判定は transitions.lose() を呼ぶだけで、
+// その先で何が起きるかを知らない(classic と同じ依存性逆転)
+transitions.lose = () => {
+	if (flow.stepFlg === STEP_LOSE) return;
+	setStep(STEP_LOSE);
+	killJiki();
+	loseTimer = 3;
+};
+
+// classic の resetSprite + goReturn 相当
+function returnToTitle() {
+	state.counter = 0;
+	state.velJiki = 5;
+	state.jikiShFlg = 1;
+	resetTekis();
+	setStep(STEP_TITLE);
+}
 
 /**
  * 中央揃えテキスト
@@ -67,8 +98,10 @@ startLoop({
 
 		if (flow.stepFlg === STEP_TITLE) {
 			if (wasPressed('action')) {
-				// classic の goReady 相当: 2秒の READY? を挟んで開始
+				// classic の goReady 相当: スコアを戻し、2秒の READY? を挟んで開始
+				resetScore();
 				resetJiki();
+				resetTekis();
 				setStep(STEP_READY);
 				stepTimer = 2;
 			}
@@ -83,7 +116,15 @@ startLoop({
 			if (wasPressed('action')) makeJikiSh();
 			if (wasPressed('shot')) chJikiSh(); // 隠しコマンド(classic の Z)
 			if (wasPressed('speed')) chVelJiki(); // 隠しコマンド(classic の S)
-			updatePlayer(dt);
+			moveJikiByInput(dt);
+			updateShots(dt);
+			updateTekis(dt);
+		} else if (flow.stepFlg === STEP_LOSE) {
+			// 操作は効かないが、飛んでいる弾と敵は流れ続ける(classicと同じ)
+			updateShots(dt);
+			updateTekis(dt);
+			loseTimer -= dt;
+			if (loseTimer <= 0) returnToTitle();
 		}
 		flushInput();
 	},
@@ -108,13 +149,18 @@ startLoop({
 				text('PRESS SPACE / TAP TO START', 320, 13, '#fff');
 			}
 			text('CLASSIC: RIDGE部 → ../classic/', 385, 10, '#667');
-		} else if (flow.stepFlg === STEP_READY) {
+			drawHud(ctx);
+		} else {
+			drawTekis(ctx, images);
 			drawPlayer(ctx, images);
-			text('READY?', 200, 20, '#fff');
-		} else if (flow.stepFlg === STEP_START) {
-			drawPlayer(ctx, images);
-			if (goTimer > 0) text('GO!!', 200, 20, '#fff');
-			text('敵の移植はこれから(移動: 矢印 / 射撃: スペース or タップ)', 385, 10, '#667');
+			drawHud(ctx);
+			if (flow.stepFlg === STEP_READY) {
+				text('READY?', 200, 20, '#fff');
+			} else if (flow.stepFlg === STEP_START && goTimer > 0) {
+				text('GO!!', 200, 20, '#fff');
+			} else if (flow.stepFlg === STEP_LOSE) {
+				text('GAME OVER', 200, 20, '#fff');
+			}
 		}
 	},
 });
@@ -129,6 +175,12 @@ window.jibfreak = {
 		jiki,
 		get activeShots() {
 			return countActiveShots();
+		},
+		get enemyCount() {
+			return tekis.length;
+		},
+		get score() {
+			return getScore();
 		},
 	},
 };

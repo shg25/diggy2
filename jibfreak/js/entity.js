@@ -42,3 +42,21 @@ export function drawEntity(ctx, images, e) {
 	if (!e.active) return;
 	ctx.drawImage(images[e.imageKey], Math.round(e.x), Math.round(e.y));
 }
+
+/**
+ * 矩形どうしの接触判定(classic の isTouching 相当)
+ * @param {{ x: number, y: number, width: number, height: number }} a
+ * @param {{ x: number, y: number, width: number, height: number }} b
+ */
+export function isTouching(a, b) {
+	return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+}
+
+/**
+ * min〜max の整数乱数(classic の DGE.rand 相当)
+ * @param {number} min
+ * @param {number} max
+ */
+export function randInt(min, max) {
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}

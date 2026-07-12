@@ -3,13 +3,12 @@
 // 変わったのは「DGEスプライト → ただのオブジェクト」と「フレーム基準 → 時間基準」。
 import { state } from './state.js';
 import { FPS, BAN_DURATION_MS } from './const.js';
-import { JIKI_SH_DEFS } from './defs.js';
+import { JIKI_SH_DEFS, BAN_IMAGE } from './defs.js';
 import { advance, isOutOfBounds, drawEntity } from './entity.js';
 import { WIDTH, HEIGHT } from './engine/screen.js';
 import { isDown } from './engine/input.js';
 
 export const JIKI_IMAGE = 'gfx/jiki/n.gif';
-const BAN_IMAGE = 'gfx/ban.gif';
 
 export const jiki = { x: WIDTH / 2 - 16, y: HEIGHT / 2 - 16, width: 32, height: 32 };
 

@@ -10,14 +10,13 @@
 // テストがその罠を踏んだ(レッスン15)。新築では生成する者が数える。
 import { state } from './state.js';
 import { FPS, TEKI1_SPAWN_RATE, BAN_DURATION_MS, BOMB_DURATION_MS } from './const.js';
-import { TEKI1_DEFS } from './defs.js';
+import { TEKI1_DEFS, BAN_IMAGE } from './defs.js';
 import { advance, isOutOfBounds, isTouching, randInt } from './entity.js';
 import { WIDTH, HEIGHT } from './engine/screen.js';
 import { isFight, transitions } from './flow.js';
 import { jiki, jikiSh1, jikiSh2, jikiSh3 } from './player.js';
 import { addScore } from './hud.js';
-
-export const BAN_IMAGE = 'gfx/ban.gif';
+import { boss, clearBossShots } from './boss.js';
 
 /** @typedef {import('./entity.js').Entity & { life: number, score: number, dieTimer: number }} Teki */
 
@@ -116,6 +115,7 @@ function touchJiki(t) {
 // ボム(classic の rmGroupTeki から移植)。BOMB_DURATION_MS の間、
 // 雑魚が触れただけで消えるフラグを立てる。ボス弾の消去はボス移植時に追加
 export function rmGroupTeki() {
+	if (boss) clearBossShots(); // classic: ボスがいる間はボス弾も消す
 	state.bombTeki = 1;
 	setTimeout(() => {
 		state.bombTeki = 0;

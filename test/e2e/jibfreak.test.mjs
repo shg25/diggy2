@@ -72,6 +72,10 @@ test('タップ(ポインタ)でも開始できる', async () => {
 });
 
 test('矢印キーで自機が動き、画面端で止まる', async () => {
+	// 目的は移動の検証なので、ボスの弾幕で死なないよう無敵化
+	await page.evaluate(() => {
+		window.jibfreak.debug.state.muteki = true;
+	});
 	await startGame();
 	const before = await page.evaluate(() => ({ ...window.jibfreak.debug.jiki }));
 
@@ -90,6 +94,9 @@ test('矢印キーで自機が動き、画面端で止まる', async () => {
 });
 
 test('スペースで撃てる。ショット切替(Z)後は同時弾数が変わる', async () => {
+	await page.evaluate(() => {
+		window.jibfreak.debug.state.muteki = true;
+	});
 	await startGame();
 	await page.keyboard.press('Space');
 	await page.waitForTimeout(100);
@@ -187,6 +194,50 @@ test('アイテムが流れてくる(そして敵数を狂わせない)', async 
 	const numTeki = await page.evaluate(() => window.jibfreak.debug.state.numTeki);
 	const enemies = await page.evaluate(() => window.jibfreak.debug.enemyCount);
 	assert.equal(numTeki, enemies, `numTeki(${numTeki})と実数(${enemies})がズレている`);
+});
+
+test('ボスが登場して弾幕を撃ってくる', async () => {
+	await page.evaluate(() => {
+		window.jibfreak.debug.state.muteki = true;
+	});
+	await startGame();
+	await page.waitForTimeout(2500); // GO!!(1秒) + counter 10tick でボス登場
+	assert.equal(await step(), 12, 'ボス登場(COME)にならない');
+	assert.ok(await page.evaluate(() => window.jibfreak.debug.boss !== null), 'ボスがいない');
+	// ボスは画面外からゆっくり入場する。砲門が画面に入って弾幕が
+	// 観測できるまで待つ(上限15秒。classicも入場中の弾は画面外で消える)
+	let shots = 0;
+	const deadline = Date.now() + 15000;
+	while (shots === 0 && Date.now() < deadline) {
+		await page.waitForTimeout(500);
+		shots = await page.evaluate(() => window.jibfreak.debug.bossShotCount);
+	}
+	assert.ok(shots > 0, `弾幕が来ない: ${shots}`);
+});
+
+test('ボスを倒すと YOU WIN、5秒後にタイトルへ戻る(20年越しの初勝利)', async () => {
+	await page.evaluate(() => {
+		window.jibfreak.debug.state.muteki = true;
+	});
+	await startGame();
+	await page.waitForTimeout(2500);
+	assert.equal(await step(), 12, 'ボスが来ていない');
+
+	// ボスを瀕死にして自機の射線上へ引きずり出し、正規の当たり判定で倒す
+	await page.evaluate(() => {
+		const boss = window.jibfreak.debug.boss;
+		if (boss) {
+			boss.life = 0.5;
+			boss.x = 400;
+			boss.y = window.jibfreak.debug.jiki.y - 20;
+		}
+	});
+	await page.keyboard.press('Space');
+	await page.waitForTimeout(500);
+	assert.equal(await step(), 14, 'YOU WIN にならない');
+
+	await page.waitForTimeout(5600);
+	assert.equal(await step(), 0, 'タイトルに戻らない');
 });
 
 test('canvasが論理解像度600x400で存在する', async () => {

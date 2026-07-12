@@ -23,3 +23,12 @@ export const PWR_DEFS = [
 	{ width: 16, height: 24, velocity: 5 },
 	{ width: 16, height: 17, velocity: 10 },
 ];
+
+// ボス定義 [0]:1面 [1]:2面(猫バス)
+export const BOSS_DEFS = [
+	{ width: 278, height: 65, x: -277, y: 300, velocity: 1, angle: 170 },
+	{ width: 222, height: 120, x: 599, y: 270, velocity: 10, angle: 0 },
+];
+
+// やられ演出の画像(自機・敵・ボスが共用)
+export const BAN_IMAGE = 'gfx/ban.gif';

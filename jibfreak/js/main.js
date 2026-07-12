@@ -6,10 +6,20 @@ import { createScreen, WIDTH, HEIGHT } from './engine/screen.js';
 import { startLoop } from './engine/loop.js';
 import { initInput, wasPressed, flushInput } from './engine/input.js';
 import { loadImages } from './engine/assets.js';
-import { STEP_TITLE, STEP_READY, STEP_START, STEP_LOSE, setStep, transitions } from './flow.js';
+import {
+	STEP_TITLE,
+	STEP_READY,
+	STEP_START,
+	STEP_COME,
+	STEP_BATTLE,
+	STEP_WIN,
+	STEP_LOSE,
+	setStep,
+	transitions,
+} from './flow.js';
 import * as flow from './flow.js';
 import { state } from './state.js';
-import { JIKI_SH_DEFS, TEKI1_DEFS, PWR_DEFS } from './defs.js';
+import { JIKI_SH_DEFS, TEKI1_DEFS, PWR_DEFS, BAN_IMAGE } from './defs.js';
 import {
 	jiki,
 	JIKI_IMAGE,
@@ -23,8 +33,19 @@ import {
 	chVelJiki,
 	countActiveShots,
 } from './player.js';
-import { tekis, resetTekis, drawTekis, rmGroupTeki, BAN_IMAGE } from './enemies.js';
+import { tekis, resetTekis, drawTekis, rmGroupTeki } from './enemies.js';
 import { pwrs, resetPwrs, drawPwrs } from './items.js';
+import {
+	boss,
+	bossShots,
+	spawnBoss,
+	getoutBoss,
+	resetBoss,
+	drawBoss,
+	BOSS_IMAGE,
+	BOSS_SH_IMAGE,
+	BOSS_LASER_IMAGE,
+} from './boss.js';
 import { updateStage, resetStage } from './stage.js';
 import { resetScore, getScore, drawHud } from './hud.js';
 
@@ -48,6 +69,9 @@ TEKI1_DEFS.forEach((_, n) => {
 PWR_DEFS.forEach((_, n) => {
 	sources[`gfx/teki/${n + 80}/l.gif`] = `gfx/teki/${n + 80}/l.gif`;
 });
+for (const key of [BOSS_IMAGE, BOSS_SH_IMAGE, BOSS_LASER_IMAGE]) {
+	sources[key] = key;
+}
 const images = await loadImages(sources);
 
 // 背景の絵柄は960pxで一周する(classicと同じ素材・同じ周期)
@@ -59,6 +83,21 @@ let time = 0;
 let stepTimer = 0;
 let goTimer = 0;
 let loseTimer = 0;
+let winTimer = 0;
+
+// ボス登場(classic の goCome) / ボス戦開始(goBattle) / 勝利(goWin)。
+// goWin は classic では未配線だった演出を、当時の作り込みどおりに再現
+transitions.come = () => {
+	setStep(STEP_COME);
+	spawnBoss();
+};
+transitions.battle = () => {
+	setStep(STEP_BATTLE);
+};
+transitions.win = () => {
+	setStep(STEP_WIN);
+	winTimer = 5; // classic goWin: YOU WIN を5秒
+};
 
 // 被弾 → GAME OVER(classic の goLose 相当)。
 // 敵の当たり判定は transitions.lose() を呼ぶだけで、
@@ -67,6 +106,7 @@ transitions.lose = () => {
 	if (flow.stepFlg === STEP_LOSE) return;
 	setStep(STEP_LOSE);
 	killJiki();
+	getoutBoss(); // ボスは飛び去る(classic)
 	loseTimer = 3;
 };
 
@@ -76,6 +116,7 @@ function returnToTitle() {
 	state.jikiShFlg = 1;
 	resetTekis();
 	resetPwrs();
+	resetBoss();
 	resetStage();
 	setStep(STEP_TITLE);
 }
@@ -109,6 +150,7 @@ startLoop({
 				resetJiki();
 				resetTekis();
 				resetPwrs();
+				resetBoss();
 				resetStage();
 				setStep(STEP_READY);
 				stepTimer = 2;
@@ -119,7 +161,12 @@ startLoop({
 				setStep(STEP_START);
 				goTimer = 1; // GO!! を1秒表示(classic の goStart 相当)
 			}
-		} else if (flow.stepFlg === STEP_START) {
+		} else if (
+			flow.stepFlg === STEP_START ||
+			flow.stepFlg === STEP_COME ||
+			flow.stepFlg === STEP_BATTLE ||
+			flow.stepFlg === STEP_WIN
+		) {
 			goTimer -= dt;
 			if (wasPressed('action')) makeJikiSh();
 			if (wasPressed('shot')) chJikiSh(); // 隠しコマンド(classic の Z)
@@ -127,7 +174,12 @@ startLoop({
 			if (wasPressed('bomb')) rmGroupTeki(); // 隠しコマンド(classic の B)
 			moveJikiByInput(dt);
 			updateShots(dt);
-			updateStage(dt);
+			// classic はGO!!の1秒後に startStage していたので、開始直後は進行を待つ
+			if (flow.stepFlg !== STEP_START || goTimer <= 0) updateStage(dt);
+			if (flow.stepFlg === STEP_WIN) {
+				winTimer -= dt;
+				if (winTimer <= 0) returnToTitle();
+			}
 		} else if (flow.stepFlg === STEP_LOSE) {
 			// 操作は効かないが、飛んでいる弾と敵は流れ続ける(classicと同じ)
 			updateShots(dt);
@@ -162,12 +214,15 @@ startLoop({
 		} else {
 			drawPwrs(ctx, images);
 			drawTekis(ctx, images);
+			drawBoss(ctx, images);
 			drawPlayer(ctx, images);
 			drawHud(ctx);
 			if (flow.stepFlg === STEP_READY) {
 				text('READY?', 200, 20, '#fff');
 			} else if (flow.stepFlg === STEP_START && goTimer > 0) {
 				text('GO!!', 200, 20, '#fff');
+			} else if (flow.stepFlg === STEP_WIN) {
+				text('YOU WIN', 200, 20, '#fff');
 			} else if (flow.stepFlg === STEP_LOSE) {
 				text('GAME OVER', 200, 20, '#fff');
 			}
@@ -191,6 +246,12 @@ window.jibfreak = {
 		},
 		get pwrCount() {
 			return pwrs.length;
+		},
+		get boss() {
+			return boss;
+		},
+		get bossShotCount() {
+			return bossShots.length;
 		},
 		get score() {
 			return getScore();

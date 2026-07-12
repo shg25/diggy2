@@ -1,4 +1,4 @@
-// JIB-FREAK MOBILE (器の段階) の回帰テスト。
+// JIB-FREAK MOBILE の回帰テスト。
 // 接点は window.jibfreak.debug のみ (classic の window.ridge と同じ思想)。
 import { test, before, after, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
@@ -48,25 +48,65 @@ afterEach(async () => {
 	await page.context().close();
 });
 
-test('タイトルが表示され、キーでREADYへ、時間経過でタイトルへ戻る', async () => {
-	assert.equal(await page.evaluate(() => window.jibfreak.debug.stepFlg), 0, 'タイトルで始まらない');
+const step = () => page.evaluate(() => window.jibfreak.debug.stepFlg);
 
+/** タイトルからゲーム開始(READY 2秒を待って START へ) */
+async function startGame() {
+	await page.keyboard.press('Space');
+	await page.waitForTimeout(2300);
+}
+
+test('タイトル → READY → START と遷移する', async () => {
+	assert.equal(await step(), 0, 'タイトルで始まらない');
 	await page.keyboard.press('Space');
 	await page.waitForTimeout(300);
-	assert.equal(await page.evaluate(() => window.jibfreak.debug.stepFlg), 10, 'READYに遷移しない');
-
-	await page.waitForTimeout(2200);
-	assert.equal(await page.evaluate(() => window.jibfreak.debug.stepFlg), 0, 'タイトルに戻らない');
+	assert.equal(await step(), 10, 'READYに遷移しない');
+	await page.waitForTimeout(2100);
+	assert.equal(await step(), 11, 'STARTに遷移しない');
 });
 
 test('タップ(ポインタ)でも開始できる', async () => {
 	await page.mouse.click(400, 300);
 	await page.waitForTimeout(300);
-	assert.equal(
-		await page.evaluate(() => window.jibfreak.debug.stepFlg),
-		10,
-		'タップでREADYに遷移しない',
-	);
+	assert.equal(await step(), 10, 'タップでREADYに遷移しない');
+});
+
+test('矢印キーで自機が動き、画面端で止まる', async () => {
+	await startGame();
+	const before = await page.evaluate(() => ({ ...window.jibfreak.debug.jiki }));
+
+	await page.keyboard.down('ArrowRight');
+	await page.waitForTimeout(400);
+	await page.keyboard.up('ArrowRight');
+	const after = await page.evaluate(() => ({ ...window.jibfreak.debug.jiki }));
+	assert.ok(after.x > before.x, `右に動いていない: ${before.x} → ${after.x}`);
+
+	// 右端まで押し続けても画面外に出ない
+	await page.keyboard.down('ArrowRight');
+	await page.waitForTimeout(3000);
+	await page.keyboard.up('ArrowRight');
+	const edge = await page.evaluate(() => ({ ...window.jibfreak.debug.jiki }));
+	assert.equal(edge.x, 600 - 32, `右端で止まらない: ${edge.x}`);
+});
+
+test('スペースで撃てる。ショット切替(Z)後は同時弾数が変わる', async () => {
+	await startGame();
+	await page.keyboard.press('Space');
+	await page.waitForTimeout(100);
+	const n1 = await page.evaluate(() => window.jibfreak.debug.activeShots);
+	assert.ok(n1 >= 1, `弾が出ていない: ${n1}`);
+
+	// レーザー(3方向)へ切替: Z を2回(1→2→3)。
+	// 同一フレーム内の2連打は1回に潰れるため、押下の間隔を空ける
+	await page.waitForTimeout(1000); // 弾が抜けるのを待つ
+	await page.keyboard.press('z');
+	await page.waitForTimeout(100);
+	await page.keyboard.press('z');
+	await page.waitForTimeout(100);
+	await page.keyboard.press('Space');
+	await page.waitForTimeout(100);
+	const n3 = await page.evaluate(() => window.jibfreak.debug.activeShots);
+	assert.ok(n3 >= 3, `レーザーが3方向出ていない: ${n3}`);
 });
 
 test('canvasが論理解像度600x400で存在する', async () => {

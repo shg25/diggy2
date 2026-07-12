@@ -9,6 +9,8 @@ const BINDINGS = {
 	down: ['ArrowDown'],
 	left: ['ArrowLeft'],
 	right: ['ArrowRight'],
+	shot: ['z', 'Z'], // 隠しコマンド: ショット変更
+	speed: ['s', 'S'], // 隠しコマンド: スピード変更
 };
 
 /** @type {Set<string>} いま押されているキー */

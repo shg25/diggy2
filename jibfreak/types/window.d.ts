@@ -3,6 +3,9 @@ interface Window {
 	jibfreak: {
 		debug: {
 			readonly stepFlg: number;
+			state: Record<string, number | boolean>;
+			jiki: { x: number; y: number; width: number; height: number };
+			readonly activeShots: number;
 		};
 	};
 }

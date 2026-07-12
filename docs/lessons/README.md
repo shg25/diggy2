@@ -30,4 +30,4 @@
 | 19 | [世界に置く — GitHub Pages で公開](19-publish.md) | `56a746c` |
 | 20 | [引っ越しと看板 — 2バージョン公開の構成](20-two-versions.md) | `f61cd86` |
 | 21 | [器から作る — canvasミニエンジン](21-canvas-engine.md) | `4603c7e` |
-| 22 | [移植その1 — 変わるものと変わらないもの](22-porting-player.md) | (このコミット) |
+| 22 | [移植その1 — 変わるものと変わらないもの](22-porting-player.md) | `f11e72c` |

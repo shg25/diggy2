@@ -7,6 +7,7 @@ interface Window {
 			jiki: { x: number; y: number; width: number; height: number };
 			readonly activeShots: number;
 			readonly enemyCount: number;
+			readonly pwrCount: number;
 			readonly score: number;
 		};
 	};

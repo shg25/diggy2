@@ -16,3 +16,10 @@ export const TEKI1_DEFS = [
 	{ width: 16, height: 16, velocity: 3, life: 3, score: 100, angRange: 160 },
 	{ width: 16, height: 16, velocity: 8, life: 2, score: 250, angRange: 90 },
 ];
+
+//パワーアップアイテム [0]:ショット変更 [1]:スピード変更 [2]:ボム
+export const PWR_DEFS = [
+	{ width: 24, height: 16, velocity: 5 },
+	{ width: 16, height: 24, velocity: 5 },
+	{ width: 16, height: 17, velocity: 10 },
+];

@@ -151,6 +151,44 @@ test('敵に当たると GAME OVER になり、タイトルへ戻る', async () 
 	assert.equal(await page.evaluate(() => window.jibfreak.debug.stepFlg), 0, 'タイトルに戻らない');
 });
 
+test('ボム(B)で画面の敵がまとめて消えてスコアが入る', async () => {
+	await page.evaluate(() => {
+		window.jibfreak.debug.state.muteki = true;
+	});
+	await startGame();
+	// 敵が2体以上になるまで待つ(上限15秒)
+	let enemies = 0;
+	const deadline = Date.now() + 15000;
+	while (enemies < 2 && Date.now() < deadline) {
+		await page.waitForTimeout(300);
+		enemies = await page.evaluate(() => window.jibfreak.debug.enemyCount);
+	}
+	assert.ok(enemies >= 2, `敵が揃わない: ${enemies}`);
+
+	await page.keyboard.press('b');
+	await page.waitForTimeout(1000); // ボム窓600ms + やられ演出
+	const score = await page.evaluate(() => window.jibfreak.debug.score);
+	assert.ok(score > 0, `ボムでスコアが入らない: ${score}`);
+});
+
+test('アイテムが流れてくる(そして敵数を狂わせない)', async () => {
+	await page.evaluate(() => {
+		window.jibfreak.debug.state.muteki = true;
+	});
+	await startGame();
+	// 平均6秒に1個湧く(毎tick 1/180)。上限45秒待つ
+	let pwrs = 0;
+	const deadline = Date.now() + 45000;
+	while (pwrs === 0 && Date.now() < deadline) {
+		await page.waitForTimeout(500);
+		pwrs = await page.evaluate(() => window.jibfreak.debug.pwrCount);
+	}
+	assert.ok(pwrs > 0, 'アイテムが一度も湧かない');
+	const numTeki = await page.evaluate(() => window.jibfreak.debug.state.numTeki);
+	const enemies = await page.evaluate(() => window.jibfreak.debug.enemyCount);
+	assert.equal(numTeki, enemies, `numTeki(${numTeki})と実数(${enemies})がズレている`);
+});
+
 test('canvasが論理解像度600x400で存在する', async () => {
 	const size = await page.evaluate(() => {
 		const c = document.querySelector('canvas');

@@ -9,7 +9,7 @@ import { loadImages } from './engine/assets.js';
 import { STEP_TITLE, STEP_READY, STEP_START, STEP_LOSE, setStep, transitions } from './flow.js';
 import * as flow from './flow.js';
 import { state } from './state.js';
-import { JIKI_SH_DEFS, TEKI1_DEFS } from './defs.js';
+import { JIKI_SH_DEFS, TEKI1_DEFS, PWR_DEFS } from './defs.js';
 import {
 	jiki,
 	JIKI_IMAGE,
@@ -23,7 +23,9 @@ import {
 	chVelJiki,
 	countActiveShots,
 } from './player.js';
-import { tekis, resetTekis, updateTekis, drawTekis, BAN_IMAGE } from './enemies.js';
+import { tekis, resetTekis, drawTekis, rmGroupTeki, BAN_IMAGE } from './enemies.js';
+import { pwrs, resetPwrs, drawPwrs } from './items.js';
+import { updateStage, resetStage } from './stage.js';
 import { resetScore, getScore, drawHud } from './hud.js';
 
 const parent = document.getElementById('screen');
@@ -42,6 +44,9 @@ const sources = {
 TEKI1_DEFS.forEach((_, n) => {
 	sources[`gfx/teki/${n}/l.gif`] = `gfx/teki/${n}/l.gif`;
 	sources[`gfx/teki/${n}/r.gif`] = `gfx/teki/${n}/r.gif`;
+});
+PWR_DEFS.forEach((_, n) => {
+	sources[`gfx/teki/${n + 80}/l.gif`] = `gfx/teki/${n + 80}/l.gif`;
 });
 const images = await loadImages(sources);
 
@@ -67,10 +72,11 @@ transitions.lose = () => {
 
 // classic の resetSprite + goReturn 相当
 function returnToTitle() {
-	state.counter = 0;
 	state.velJiki = 5;
 	state.jikiShFlg = 1;
 	resetTekis();
+	resetPwrs();
+	resetStage();
 	setStep(STEP_TITLE);
 }
 
@@ -102,6 +108,8 @@ startLoop({
 				resetScore();
 				resetJiki();
 				resetTekis();
+				resetPwrs();
+				resetStage();
 				setStep(STEP_READY);
 				stepTimer = 2;
 			}
@@ -116,13 +124,14 @@ startLoop({
 			if (wasPressed('action')) makeJikiSh();
 			if (wasPressed('shot')) chJikiSh(); // 隠しコマンド(classic の Z)
 			if (wasPressed('speed')) chVelJiki(); // 隠しコマンド(classic の S)
+			if (wasPressed('bomb')) rmGroupTeki(); // 隠しコマンド(classic の B)
 			moveJikiByInput(dt);
 			updateShots(dt);
-			updateTekis(dt);
+			updateStage(dt);
 		} else if (flow.stepFlg === STEP_LOSE) {
 			// 操作は効かないが、飛んでいる弾と敵は流れ続ける(classicと同じ)
 			updateShots(dt);
-			updateTekis(dt);
+			updateStage(dt);
 			loseTimer -= dt;
 			if (loseTimer <= 0) returnToTitle();
 		}
@@ -151,6 +160,7 @@ startLoop({
 			text('CLASSIC: RIDGE部 → ../classic/', 385, 10, '#667');
 			drawHud(ctx);
 		} else {
+			drawPwrs(ctx, images);
 			drawTekis(ctx, images);
 			drawPlayer(ctx, images);
 			drawHud(ctx);
@@ -178,6 +188,9 @@ window.jibfreak = {
 		},
 		get enemyCount() {
 			return tekis.length;
+		},
+		get pwrCount() {
+			return pwrs.length;
 		},
 		get score() {
 			return getScore();

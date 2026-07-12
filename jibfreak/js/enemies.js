@@ -9,7 +9,7 @@
 // classic は「減算は敵自身、加算は呼び出し側」という非対称な契約で、
 // テストがその罠を踏んだ(レッスン15)。新築では生成する者が数える。
 import { state } from './state.js';
-import { FPS, TEKI1_SPAWN_RATE, BAN_DURATION_MS } from './const.js';
+import { FPS, TEKI1_SPAWN_RATE, BAN_DURATION_MS, BOMB_DURATION_MS } from './const.js';
 import { TEKI1_DEFS } from './defs.js';
 import { advance, isOutOfBounds, isTouching, randInt } from './entity.js';
 import { WIDTH, HEIGHT } from './engine/screen.js';
@@ -25,12 +25,10 @@ export const BAN_IMAGE = 'gfx/ban.gif';
 export const tekis = [];
 
 const TICK = 1 / FPS;
-let tickAccum = 0;
 
 export function resetTekis() {
 	tekis.length = 0;
 	state.numTeki = 0;
-	tickAccum = 0;
 }
 
 // 1面の敵機作る(classic の makeTeki1 から移植)
@@ -115,17 +113,17 @@ function touchJiki(t) {
 	transitions.lose();
 }
 
-/** @param {number} dt 経過秒 */
-export function updateTekis(dt) {
-	tickAccum += dt;
-	while (tickAccum >= TICK) {
-		tickAccum -= TICK;
-		tick();
-	}
+// ボム(classic の rmGroupTeki から移植)。BOMB_DURATION_MS の間、
+// 雑魚が触れただけで消えるフラグを立てる。ボス弾の消去はボス移植時に追加
+export function rmGroupTeki() {
+	state.bombTeki = 1;
+	setTimeout(() => {
+		state.bombTeki = 0;
+	}, BOMB_DURATION_MS);
 }
 
 // 30Hz の1フレーム分(classic の stage1 interval + 各スプライトの ping 相当)
-function tick() {
+export function tickTekis() {
 	// 湧き: 敵が0なら必ず、それ以外は毎フレーム 1/TEKI1_SPAWN_RATE の確率
 	if (isFight()) {
 		if (state.numTeki === 0 || randInt(1, TEKI1_SPAWN_RATE) === 1) spawnTeki1();
@@ -142,6 +140,10 @@ function tick() {
 		if (isOutOfBounds(t)) {
 			state.numTeki--;
 			tekis.splice(i, 1);
+			continue;
+		}
+		if (state.bombTeki === 1) {
+			banTeki(t); // ボム有効中は触れただけで消える(classic)
 			continue;
 		}
 		hitAllJikiSh(t, 0.8);

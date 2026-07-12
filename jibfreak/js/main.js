@@ -49,7 +49,7 @@ import {
 } from './boss.js';
 import { changeStage } from './stage.js';
 import { updateStage, resetStage } from './stage.js';
-import { resetScore, getScore, drawHud } from './hud.js';
+import { resetScore, getScore, getHiScore, isNewRecord, drawHud } from './hud.js';
 
 const parent = document.getElementById('screen');
 if (!parent) throw new Error('#screen がない');
@@ -233,8 +233,10 @@ startLoop({
 				text('GO!!', 200, 20, '#fff');
 			} else if (flow.stepFlg === STEP_WIN) {
 				text('YOU WIN', 200, 20, '#fff');
+				if (isNewRecord()) text('NEW RECORD!', 230, 14, '#fc6');
 			} else if (flow.stepFlg === STEP_LOSE) {
 				text('GAME OVER', 200, 20, '#fff');
+				if (isNewRecord()) text('NEW RECORD!', 230, 14, '#fc6');
 			}
 		}
 	},
@@ -265,6 +267,9 @@ window.jibfreak = {
 		},
 		get score() {
 			return getScore();
+		},
+		get hiScore() {
+			return getHiScore();
 		},
 	},
 };

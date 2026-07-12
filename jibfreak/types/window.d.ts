@@ -11,6 +11,7 @@ interface Window {
 			readonly boss: { x: number; y: number; life: number; turnMode: number } | null;
 			readonly bossShotCount: number;
 			readonly score: number;
+			readonly hiScore: number;
 		};
 	};
 }

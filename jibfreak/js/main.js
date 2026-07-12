@@ -4,7 +4,7 @@
 // flow.js / state.js / const.js は classic から1文字も変えずに使っている。
 import { createScreen, WIDTH, HEIGHT } from './engine/screen.js';
 import { startLoop } from './engine/loop.js';
-import { initInput, wasPressed, flushInput } from './engine/input.js';
+import { initInput, wasPressed, isDown, flushInput } from './engine/input.js';
 import { loadImages } from './engine/assets.js';
 import {
 	STEP_TITLE,
@@ -173,7 +173,9 @@ startLoop({
 			flow.stepFlg === STEP_WIN
 		) {
 			goTimer -= dt;
-			if (wasPressed('action')) makeJikiSh();
+			// 押しっぱなしで連射(画面内の弾数はプールの3発制限が守る)。
+			// wasPressed も見るのは、フレーム間の一瞬のタップを拾うため
+			if (wasPressed('action') || isDown('action')) makeJikiSh();
 			if (wasPressed('shot')) chJikiSh(); // 隠しコマンド(classic の Z)
 			if (wasPressed('speed')) chVelJiki(); // 隠しコマンド(classic の S)
 			if (wasPressed('bomb')) rmGroupTeki(); // 隠しコマンド(classic の B)
@@ -203,8 +205,11 @@ startLoop({
 		ctx.fillStyle = sky;
 		ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-		// スクロールする地面(classicと同じ素材)
+		// スクロールする地面。素材は960px幅しかなく、classic では DOM の
+		// background-repeat が自動でタイルを敷いていた。canvas は1枚しか
+		// 描かないので、2枚並べて途切れなく繋ぐ
 		ctx.drawImage(images['gfx/bg.gif'], -bgX, HEIGHT - 320);
+		ctx.drawImage(images['gfx/bg.gif'], -bgX + BG_PERIOD, HEIGHT - 320);
 
 		if (flow.stepFlg === STEP_TITLE) {
 			text('JIB-FREAK', 150, 48, '#3c9');

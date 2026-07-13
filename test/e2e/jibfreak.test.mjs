@@ -350,6 +350,12 @@ test('P でポーズすると時間が止まり、P で即時再開する', asyn
 	const vel2 = await page.evaluate(() => window.jibfreak.debug.state.velJiki);
 	assert.equal(vel2, vel1, 'ポーズ中に隠しコマンドが効いた');
 
+	// 画面全体(背景スクロール含む)がピクセル単位で静止している
+	const shot1 = await page.screenshot();
+	await page.waitForTimeout(600);
+	const shot2 = await page.screenshot();
+	assert.ok(shot1.equals(shot2), 'ポーズ中に画面のどこかが動いている(背景スクロール等)');
+
 	await page.keyboard.press('p'); // 即時再開
 	await page.waitForTimeout(500);
 	const c3 = await page.evaluate(() => window.jibfreak.debug.state.counter);

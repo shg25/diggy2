@@ -147,7 +147,10 @@ startLoop({
 	/** @param {number} dt */
 	update(dt) {
 		time += dt;
-		bgX = (bgX + BG_SPEED * dt) % BG_PERIOD;
+		// 背景のスクロールもゲーム内時間。ポーズ中は止める
+		if (flow.stepFlg !== STEP_PAUSE) {
+			bgX = (bgX + BG_SPEED * dt) % BG_PERIOD;
+		}
 
 		if (flow.stepFlg === STEP_TITLE) {
 			if (wasPressed('speed')) changeStage(); // タイトルで S = ステージ切替(classic)

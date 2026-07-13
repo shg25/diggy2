@@ -328,6 +328,35 @@ test('ハイスコアが保存され、リロード後も残る', async () => {
 	assert.ok(persisted >= score, `リロードでハイスコアが消えた: ${persisted}`);
 });
 
+test('P でポーズすると時間が止まり、P で即時再開する', async () => {
+	await page.evaluate(() => {
+		window.jibfreak.debug.state.muteki = true;
+	});
+	await startGame();
+	await page.waitForTimeout(2000); // ステージ進行が動き出すのを待つ
+
+	await page.keyboard.press('p');
+	await page.waitForTimeout(200);
+	assert.equal(await step(), 90, 'ポーズ状態(90)にならない');
+	const c1 = await page.evaluate(() => window.jibfreak.debug.state.counter);
+	await page.waitForTimeout(1000);
+	const c2 = await page.evaluate(() => window.jibfreak.debug.state.counter);
+	assert.equal(c2, c1, `ポーズ中にゲーム内時間が進んだ: ${c1} → ${c2}`);
+
+	// ポーズ中は隠しコマンドも無効(スピード変更が効かない)
+	const vel1 = await page.evaluate(() => window.jibfreak.debug.state.velJiki);
+	await page.keyboard.press('s');
+	await page.waitForTimeout(200);
+	const vel2 = await page.evaluate(() => window.jibfreak.debug.state.velJiki);
+	assert.equal(vel2, vel1, 'ポーズ中に隠しコマンドが効いた');
+
+	await page.keyboard.press('p'); // 即時再開
+	await page.waitForTimeout(500);
+	const c3 = await page.evaluate(() => window.jibfreak.debug.state.counter);
+	assert.ok(c3 > c2, `再開後に時間が進まない: ${c2} → ${c3}`);
+	assert.notEqual(await step(), 90, '再開できていない');
+});
+
 test('canvasが論理解像度600x400で存在する', async () => {
 	const size = await page.evaluate(() => {
 		const c = document.querySelector('canvas');

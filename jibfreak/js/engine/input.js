@@ -12,6 +12,7 @@ const BINDINGS = {
 	shot: ['z', 'Z'], // 隠しコマンド: ショット変更
 	speed: ['s', 'S'], // 隠しコマンド: スピード変更
 	bomb: ['b', 'B'], // 隠しコマンド: ボム
+	pause: ['p', 'P'],
 };
 
 /** @type {Set<string>} いま押されているキー */

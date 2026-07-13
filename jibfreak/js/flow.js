@@ -9,6 +9,8 @@ export const STEP_COME = 12;
 export const STEP_BATTLE = 13;
 export const STEP_WIN = 14;
 export const STEP_LOSE = 19;
+// classic に無い新設の状態。番号は既存(0-19)と離して衝突を避ける
+export const STEP_PAUSE = 90;
 
 export let stepFlg = 0;
 
@@ -23,6 +25,7 @@ export function setStep(step) {
 	else if (step === STEP_BATTLE) console.log('goBattle');
 	else if (step === STEP_WIN) console.log('goWin');
 	else if (step === STEP_LOSE) console.log('goLose');
+	else if (step === STEP_PAUSE) console.log('goPause');
 	else console.log('go????');
 }
 

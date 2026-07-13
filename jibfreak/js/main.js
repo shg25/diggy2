@@ -14,6 +14,7 @@ import {
 	STEP_BATTLE,
 	STEP_WIN,
 	STEP_LOSE,
+	STEP_PAUSE,
 	setStep,
 	transitions,
 } from './flow.js';
@@ -88,6 +89,7 @@ let stepTimer = 0;
 let goTimer = 0;
 let loseTimer = 0;
 let winTimer = 0;
+let pausedFrom = STEP_START; // ポーズ解除で戻る先
 
 // ボス登場(classic の goCome) / ボス戦開始(goBattle) / 勝利(goWin)。
 // goWin は classic では未配線だった演出を、当時の作り込みどおりに再現
@@ -172,6 +174,13 @@ startLoop({
 			flow.stepFlg === STEP_BATTLE ||
 			flow.stepFlg === STEP_WIN
 		) {
+			if (wasPressed('pause')) {
+				// ポーズ突入。時間ごと止める(タイマー類はこの分岐でしか進まない)
+				pausedFrom = flow.stepFlg;
+				setStep(STEP_PAUSE);
+				flushInput();
+				return;
+			}
 			goTimer -= dt;
 			// 押しっぱなしで連射(画面内の弾数はプールの3発制限が守る)。
 			// wasPressed も見るのは、フレーム間の一瞬のタップを拾うため
@@ -187,6 +196,9 @@ startLoop({
 				winTimer -= dt;
 				if (winTimer <= 0) returnToTitle();
 			}
+		} else if (flow.stepFlg === STEP_PAUSE) {
+			// 停止中は何も進めない。P で即時再開(隠しコマンド含め他は無効)
+			if (wasPressed('pause')) setStep(pausedFrom);
 		} else if (flow.stepFlg === STEP_LOSE) {
 			// 操作は効かないが、飛んでいる弾と敵は流れ続ける(classicと同じ)
 			updateShots(dt);
@@ -227,7 +239,14 @@ startLoop({
 			drawBoss(ctx, images);
 			drawPlayer(ctx, images);
 			drawHud(ctx);
-			if (flow.stepFlg === STEP_READY) {
+			text('移動: 矢印 / 射撃: スペース or タップ / P: ポーズ', 385, 10, '#667');
+			if (flow.stepFlg === STEP_PAUSE) {
+				// 薄暗くして PAUSE(会長答弁: 演出は暗転、再開は即時)
+				ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+				ctx.fillRect(0, 0, WIDTH, HEIGHT);
+				text('PAUSE', 200, 24, '#fff');
+				text('P で再開', 225, 11, '#aab');
+			} else if (flow.stepFlg === STEP_READY) {
 				text('READY?', 200, 20, '#fff');
 			} else if (flow.stepFlg === STEP_START && goTimer > 0) {
 				text('GO!!', 200, 20, '#fff');

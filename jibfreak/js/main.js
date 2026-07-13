@@ -6,6 +6,7 @@ import { createScreen, WIDTH, HEIGHT } from './engine/screen.js';
 import { startLoop } from './engine/loop.js';
 import { initInput, wasPressed, isDown, flushInput } from './engine/input.js';
 import { loadImages } from './engine/assets.js';
+import { loadStage2Unlocked, saveStage2Unlocked } from './storage.js';
 import {
 	STEP_TITLE,
 	STEP_READY,
@@ -48,7 +49,6 @@ import {
 	BOSS_LASER_IMAGE,
 	BOSS2_IMAGES,
 } from './boss.js';
-import { changeStage } from './stage.js';
 import { updateStage, resetStage } from './stage.js';
 import { resetScore, getScore, getHiScore, isNewRecord, drawHud } from './hud.js';
 
@@ -60,6 +60,7 @@ initInput();
 /** @type {Record<string, string>} */
 const sources = {
 	'gfx/bg.gif': 'gfx/bg.gif',
+	'gfx/title/arrow.gif': 'gfx/title/arrow.gif', // 20年前の未使用素材、初出番
 	[JIKI_IMAGE]: JIKI_IMAGE,
 	[BAN_IMAGE]: BAN_IMAGE,
 	[JIKI_SH_DEFS[0].image]: JIKI_SH_DEFS[0].image,
@@ -91,6 +92,11 @@ let loseTimer = 0;
 let winTimer = 0;
 let pausedFrom = STEP_START; // ポーズ解除で戻る先
 
+// タイトルのステージ選択(第3回生徒会)
+let selectedStage = 1;
+let stage2Unlocked = loadStage2Unlocked();
+let unlockedNow = false; // このゲームの勝利で解放した瞬間か
+
 // ボス登場(classic の goCome) / ボス戦開始(goBattle) / 勝利(goWin)。
 // goWin は classic では未配線だった演出を、当時の作り込みどおりに再現
 transitions.come = () => {
@@ -103,6 +109,12 @@ transitions.battle = () => {
 transitions.win = () => {
 	setStep(STEP_WIN);
 	winTimer = 5; // classic goWin: YOU WIN を5秒
+	// ステージ1を初めてクリアしたらステージ2が解放される(苦労の報酬)
+	if (state.stageFlg === 1 && !stage2Unlocked) {
+		stage2Unlocked = true;
+		unlockedNow = true;
+		saveStage2Unlocked();
+	}
 };
 
 // 被弾 → GAME OVER(classic の goLose 相当)。
@@ -153,9 +165,14 @@ startLoop({
 		}
 
 		if (flow.stepFlg === STEP_TITLE) {
-			if (wasPressed('speed')) changeStage(); // タイトルで S = ステージ切替(classic)
+			// ステージ選択(解放済みのときだけカーソルが動く)
+			if (stage2Unlocked && (wasPressed('up') || wasPressed('down'))) {
+				selectedStage = selectedStage === 1 ? 2 : 1;
+			}
 			if (wasPressed('action')) {
 				// classic の goReady 相当: スコアを戻し、2秒の READY? を挟んで開始
+				state.stageFlg = selectedStage;
+				unlockedNow = false;
 				resetScore();
 				resetJiki();
 				resetTekis();
@@ -230,10 +247,29 @@ startLoop({
 			text('JIB-FREAK', 150, 48, '#3c9');
 			text('MOBILE', 195, 30, '#3c9');
 			const bob = Math.sin(time * 2) * 8;
-			ctx.drawImage(images[JIKI_IMAGE], WIDTH / 2 - 16, 240 + bob);
-			if (Math.floor(time * 2) % 2 === 0) {
-				text('PRESS SPACE / TAP TO START', 320, 13, '#fff');
+			ctx.drawImage(images[JIKI_IMAGE], WIDTH / 2 - 16, 212 + bob);
+
+			// ステージ選択メニュー(カーソルは20年前の未使用素材 arrow.gif)
+			const menuY = [272, 296];
+			text('STAGE 1', menuY[0], 14, selectedStage === 1 ? '#fff' : '#889');
+			if (stage2Unlocked) {
+				text('STAGE 2', menuY[1], 14, selectedStage === 2 ? '#fff' : '#889');
+			} else {
+				text('STAGE 2', menuY[1], 14, '#454c5c');
+				text('(STAGE 1 をクリアで解放)', menuY[1] + 14, 9, '#556');
 			}
+			ctx.drawImage(
+				images['gfx/title/arrow.gif'],
+				WIDTH / 2 - 52,
+				menuY[selectedStage - 1] - 11,
+				8,
+				14,
+			);
+
+			if (Math.floor(time * 2) % 2 === 0) {
+				text('スペース or タップ で開始', 336, 12, '#fff');
+			}
+			text('↑↓: ステージ選択 / ゲーム中 矢印: 移動 スペース: 射撃 P: ポーズ', 362, 10, '#889');
 			text('CLASSIC: RIDGE部 → ../classic/', 385, 10, '#667');
 			drawHud(ctx);
 		} else {
@@ -256,6 +292,7 @@ startLoop({
 			} else if (flow.stepFlg === STEP_WIN) {
 				text('YOU WIN', 200, 20, '#fff');
 				if (isNewRecord()) text('NEW RECORD!', 230, 14, '#fc6');
+				if (unlockedNow) text('STAGE 2 が解放された!', 254, 14, '#3c9');
 			} else if (flow.stepFlg === STEP_LOSE) {
 				text('GAME OVER', 200, 20, '#fff');
 				if (isNewRecord()) text('NEW RECORD!', 230, 14, '#fc6');
@@ -292,6 +329,12 @@ window.jibfreak = {
 		},
 		get hiScore() {
 			return getHiScore();
+		},
+		get selectedStage() {
+			return selectedStage;
+		},
+		get stage2Unlocked() {
+			return stage2Unlocked;
 		},
 	},
 };

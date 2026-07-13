@@ -22,3 +22,24 @@ export function saveHiScore(score) {
 		memoryFallback = score;
 	}
 }
+
+const STAGE2_KEY = 'jibfreak.stage2';
+
+let stage2Fallback = false;
+
+/** @returns {boolean} ステージ2が解放済みか */
+export function loadStage2Unlocked() {
+	try {
+		return localStorage.getItem(STAGE2_KEY) === '1';
+	} catch {
+		return stage2Fallback;
+	}
+}
+
+export function saveStage2Unlocked() {
+	try {
+		localStorage.setItem(STAGE2_KEY, '1');
+	} catch {
+		stage2Fallback = true;
+	}
+}

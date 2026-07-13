@@ -12,6 +12,8 @@ interface Window {
 			readonly bossShotCount: number;
 			readonly score: number;
 			readonly hiScore: number;
+			readonly selectedStage: number;
+			readonly stage2Unlocked: boolean;
 		};
 	};
 }

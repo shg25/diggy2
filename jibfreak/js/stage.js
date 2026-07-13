@@ -19,11 +19,6 @@ export function resetStage() {
 	state.counter = 0;
 }
 
-// タイトルでのステージ切替(classic の changeStage)
-export function changeStage() {
-	state.stageFlg = state.stageFlg === 1 ? 2 : 1;
-}
-
 /** @param {number} dt 経過秒 */
 export function updateStage(dt) {
 	tickAccum += dt;

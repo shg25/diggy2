@@ -20,8 +20,15 @@ export function loadImages(sources) {
 	/** @type {Record<string, Anim>} */
 	const anims = {};
 	const jobs = Object.entries(sources).map(async ([name, url]) => {
-		const res = await fetch(url);
-		if (!res.ok) throw new Error(`画像の読み込みに失敗: ${url}`);
+		// CDNの一時的な失敗で全体が起動不能にならないよう、少し待って再試行する
+		// (本番デプロイ直後の伝播中に1回の404でゲームが死んだ実績あり)
+		let res = null;
+		for (let attempt = 0; attempt < 3; attempt++) {
+			res = await fetch(url);
+			if (res.ok) break;
+			await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+		}
+		if (!res || !res.ok) throw new Error(`画像の読み込みに失敗: ${url}`);
 		const bytes = new Uint8Array(await res.arrayBuffer());
 		const gif = parseGif(bytes);
 

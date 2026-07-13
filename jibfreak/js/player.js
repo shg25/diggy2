@@ -5,6 +5,7 @@ import { state } from './state.js';
 import { FPS, BAN_DURATION_MS } from './const.js';
 import { JIKI_SH_DEFS, BAN_IMAGE } from './defs.js';
 import { advance, isOutOfBounds, drawEntity } from './entity.js';
+import { frameOf } from './engine/assets.js';
 import { WIDTH, HEIGHT } from './engine/screen.js';
 import { isDown } from './engine/input.js';
 
@@ -171,16 +172,17 @@ export function updateShots(dt) {
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {Record<string, HTMLImageElement>} images
+ * @param {Record<string, import('./engine/assets.js').Anim>} images
+ * @param {number} tMs アニメーション時刻(ミリ秒)
  */
-export function drawPlayer(ctx, images) {
+export function drawPlayer(ctx, images, tMs) {
 	for (const pool of [jikiSh1, jikiSh2, jikiSh3]) {
-		for (const shot of pool) drawEntity(ctx, images, shot);
+		for (const shot of pool) drawEntity(ctx, images, shot, tMs);
 	}
 	if (jikiState === 'alive') {
-		ctx.drawImage(images[JIKI_IMAGE], Math.round(jiki.x), Math.round(jiki.y));
+		ctx.drawImage(frameOf(images[JIKI_IMAGE], tMs), Math.round(jiki.x), Math.round(jiki.y));
 	} else if (jikiState === 'ban') {
-		ctx.drawImage(images[BAN_IMAGE], Math.round(jiki.x), Math.round(jiki.y));
+		ctx.drawImage(frameOf(images[BAN_IMAGE], tMs), Math.round(jiki.x), Math.round(jiki.y));
 	}
 }
 

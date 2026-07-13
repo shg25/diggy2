@@ -9,6 +9,7 @@ import { state } from './state.js';
 import { FPS, BAN_DURATION_MS } from './const.js';
 import { BOSS_DEFS } from './defs.js';
 import { advance, isOutOfBounds, isTouching } from './entity.js';
+import { frameOf } from './engine/assets.js';
 import { STEP_COME, STEP_BATTLE, stepFlg, isFight, transitions } from './flow.js';
 import { jiki, jikiSh1, jikiSh3 } from './player.js';
 import { addScore } from './hud.js';
@@ -327,13 +328,14 @@ export function makeBossSh2(num) {
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {Record<string, HTMLImageElement>} images
+ * @param {Record<string, import('./engine/assets.js').Anim>} images
+ * @param {number} tMs アニメーション時刻(ミリ秒)
  */
-export function drawBoss(ctx, images) {
+export function drawBoss(ctx, images, tMs) {
 	for (const s of bossShots) {
-		ctx.drawImage(images[s.imageKey], Math.round(s.x), Math.round(s.y));
+		ctx.drawImage(frameOf(images[s.imageKey], tMs), Math.round(s.x), Math.round(s.y));
 	}
 	if (boss) {
-		ctx.drawImage(images[boss.imageKey], Math.round(boss.x), Math.round(boss.y));
+		ctx.drawImage(frameOf(images[boss.imageKey], tMs), Math.round(boss.x), Math.round(boss.y));
 	}
 }

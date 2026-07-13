@@ -53,3 +53,6 @@ main に push すると GitHub Pages が自動更新される。
   jibfreak では物理を30Hz固定tickで回して単位を保存している
 - Diggy の角度規約は (270 - angle) して sin/cos (entity.js が互換実装)
 - bg.gif は960px幅。canvas では2枚並べて描く
+- 素材のGIFは33本がアニメ(自機のプロペラ・爆発・猫バスの歩行等)。
+  jibfreak では engine/gif.js(自前デコーダ)が全コマ展開し、
+  frameOf() でゲーム内時間に同期再生する(ポーズで止まる)

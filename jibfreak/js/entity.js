@@ -4,6 +4,7 @@
 // そのまま使える(lib/diggy/core/dge.js の getCoordsByAngleVelocity 参照)。
 import { FPS } from './const.js';
 import { WIDTH, HEIGHT } from './engine/screen.js';
+import { frameOf } from './engine/assets.js';
 
 /**
  * @typedef {{
@@ -35,12 +36,13 @@ export function isOutOfBounds(e) {
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {Record<string, HTMLImageElement>} images
+ * @param {Record<string, import('./engine/assets.js').Anim>} images
  * @param {Entity} e
+ * @param {number} tMs アニメーション時刻(ミリ秒)
  */
-export function drawEntity(ctx, images, e) {
+export function drawEntity(ctx, images, e, tMs) {
 	if (!e.active) return;
-	ctx.drawImage(images[e.imageKey], Math.round(e.x), Math.round(e.y));
+	ctx.drawImage(frameOf(images[e.imageKey], tMs), Math.round(e.x), Math.round(e.y));
 }
 
 /**

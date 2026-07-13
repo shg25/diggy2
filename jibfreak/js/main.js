@@ -5,7 +5,7 @@
 import { createScreen, WIDTH, HEIGHT } from './engine/screen.js';
 import { startLoop } from './engine/loop.js';
 import { initInput, wasPressed, isDown, flushInput } from './engine/input.js';
-import { loadImages } from './engine/assets.js';
+import { loadImages, frameOf } from './engine/assets.js';
 import { loadStage2Unlocked, saveStage2Unlocked } from './storage.js';
 import {
 	STEP_TITLE,
@@ -86,6 +86,7 @@ const BG_SPEED = 60; // px/秒 (classicの velocity 2 × 30fps 相当)
 
 let bgX = 0;
 let time = 0;
+let animTime = 0; // GIFアニメの時計。ゲーム内時間なのでポーズで止まる
 let stepTimer = 0;
 let goTimer = 0;
 let loseTimer = 0;
@@ -159,9 +160,10 @@ startLoop({
 	/** @param {number} dt */
 	update(dt) {
 		time += dt;
-		// 背景のスクロールもゲーム内時間。ポーズ中は止める
+		// 背景のスクロールとGIFアニメはゲーム内時間。ポーズ中は止める
 		if (flow.stepFlg !== STEP_PAUSE) {
 			bgX = (bgX + BG_SPEED * dt) % BG_PERIOD;
+			animTime += dt;
 		}
 
 		if (flow.stepFlg === STEP_TITLE) {
@@ -229,6 +231,7 @@ startLoop({
 		flushInput();
 	},
 	draw() {
+		const tMs = animTime * 1000;
 		// 夜空
 		const sky = ctx.createLinearGradient(0, 0, 0, HEIGHT);
 		sky.addColorStop(0, '#000');
@@ -240,14 +243,14 @@ startLoop({
 		// スクロールする地面。素材は960px幅しかなく、classic では DOM の
 		// background-repeat が自動でタイルを敷いていた。canvas は1枚しか
 		// 描かないので、2枚並べて途切れなく繋ぐ
-		ctx.drawImage(images['gfx/bg.gif'], -bgX, HEIGHT - 320);
-		ctx.drawImage(images['gfx/bg.gif'], -bgX + BG_PERIOD, HEIGHT - 320);
+		ctx.drawImage(frameOf(images['gfx/bg.gif'], tMs), -bgX, HEIGHT - 320);
+		ctx.drawImage(frameOf(images['gfx/bg.gif'], tMs), -bgX + BG_PERIOD, HEIGHT - 320);
 
 		if (flow.stepFlg === STEP_TITLE) {
 			text('JIB-FREAK', 150, 48, '#3c9');
 			text('MOBILE', 195, 30, '#3c9');
 			const bob = Math.sin(time * 2) * 8;
-			ctx.drawImage(images[JIKI_IMAGE], WIDTH / 2 - 16, 212 + bob);
+			ctx.drawImage(frameOf(images[JIKI_IMAGE], tMs), WIDTH / 2 - 16, 212 + bob);
 
 			// ステージ選択メニュー(カーソルは20年前の未使用素材 arrow.gif)
 			const menuY = [272, 296];
@@ -258,8 +261,9 @@ startLoop({
 				text('STAGE 2', menuY[1], 14, '#454c5c');
 				text('(STAGE 1 をクリアで解放)', menuY[1] + 14, 9, '#556');
 			}
+			// カーソル自体も2コマのアニメGIF(20年前の芸の細かさ)
 			ctx.drawImage(
-				images['gfx/title/arrow.gif'],
+				frameOf(images['gfx/title/arrow.gif'], tMs),
 				WIDTH / 2 - 52,
 				menuY[selectedStage - 1] - 11,
 				8,
@@ -273,10 +277,10 @@ startLoop({
 			text('CLASSIC: RIDGE部 → ../classic/', 385, 10, '#667');
 			drawHud(ctx);
 		} else {
-			drawPwrs(ctx, images);
-			drawTekis(ctx, images);
-			drawBoss(ctx, images);
-			drawPlayer(ctx, images);
+			drawPwrs(ctx, images, tMs);
+			drawTekis(ctx, images, tMs);
+			drawBoss(ctx, images, tMs);
+			drawPlayer(ctx, images, tMs);
 			drawHud(ctx);
 			text('移動: 矢印 / 射撃: スペース or タップ / P: ポーズ', 385, 10, '#667');
 			if (flow.stepFlg === STEP_PAUSE) {

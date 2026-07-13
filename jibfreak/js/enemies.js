@@ -12,6 +12,7 @@ import { state } from './state.js';
 import { FPS, TEKI1_SPAWN_RATE, BAN_DURATION_MS, BOMB_DURATION_MS } from './const.js';
 import { TEKI1_DEFS, BAN_IMAGE } from './defs.js';
 import { advance, isOutOfBounds, isTouching, randInt } from './entity.js';
+import { frameOf } from './engine/assets.js';
 import { WIDTH, HEIGHT } from './engine/screen.js';
 import { isFight, transitions } from './flow.js';
 import { jiki, jikiSh1, jikiSh2, jikiSh3 } from './player.js';
@@ -217,13 +218,14 @@ export function tickTekis() {
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {Record<string, HTMLImageElement>} images
+ * @param {Record<string, import('./engine/assets.js').Anim>} images
+ * @param {number} tMs アニメーション時刻(ミリ秒)
  */
-export function drawTekis(ctx, images) {
+export function drawTekis(ctx, images, tMs) {
 	for (const t of tekis) {
-		ctx.drawImage(images[t.imageKey], Math.round(t.x), Math.round(t.y));
+		ctx.drawImage(frameOf(images[t.imageKey], tMs), Math.round(t.x), Math.round(t.y));
 	}
 	if (teki2) {
-		ctx.drawImage(images[teki2.imageKey], Math.round(teki2.x), Math.round(teki2.y));
+		ctx.drawImage(frameOf(images[teki2.imageKey], tMs), Math.round(teki2.x), Math.round(teki2.y));
 	}
 }

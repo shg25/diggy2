@@ -6,6 +6,7 @@ import { state } from './state.js';
 import { PWR_SPAWN_RATE } from './const.js';
 import { PWR_DEFS } from './defs.js';
 import { advance, isOutOfBounds, isTouching, randInt } from './entity.js';
+import { frameOf } from './engine/assets.js';
 import { WIDTH, HEIGHT } from './engine/screen.js';
 import { isFight } from './flow.js';
 import { jiki, chJikiSh, chVelJiki } from './player.js';
@@ -77,10 +78,11 @@ export function tickPwrs() {
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {Record<string, HTMLImageElement>} images
+ * @param {Record<string, import('./engine/assets.js').Anim>} images
+ * @param {number} tMs アニメーション時刻(ミリ秒)
  */
-export function drawPwrs(ctx, images) {
+export function drawPwrs(ctx, images, tMs) {
 	for (const p of pwrs) {
-		ctx.drawImage(images[p.imageKey], Math.round(p.x), Math.round(p.y));
+		ctx.drawImage(frameOf(images[p.imageKey], tMs), Math.round(p.x), Math.round(p.y));
 	}
 }

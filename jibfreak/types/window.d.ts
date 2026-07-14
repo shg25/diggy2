@@ -16,6 +16,7 @@ interface Window {
 			readonly stage2Unlocked: boolean;
 			readonly soundMuted: boolean;
 			readonly soundRequests: number;
+			readonly shotXs: number[];
 		};
 	};
 }

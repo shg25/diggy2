@@ -8,7 +8,7 @@ import { advance, isOutOfBounds, drawEntity } from './entity.js';
 import { frameOf } from './engine/assets.js';
 import { play } from './engine/sound.js';
 import { WIDTH, HEIGHT } from './engine/screen.js';
-import { isDown } from './engine/input.js';
+import { isDown, consumePointerDelta } from './engine/input.js';
 
 export const JIKI_IMAGE = 'gfx/jiki/n.gif';
 
@@ -152,6 +152,17 @@ export function moveJikiByInput(dt) {
 		jiki.x += step;
 		if (jiki.x >= WIDTH - jiki.width) jiki.x = WIDTH - jiki.width;
 	}
+
+	// ドラッグ相対移動(第5回)。指の移動量がそのまま自機の移動量
+	const { dx, dy } = consumePointerDelta();
+	if (dx !== 0 || dy !== 0) {
+		jiki.x += dx;
+		jiki.y += dy;
+		if (jiki.x < 0) jiki.x = 0;
+		if (jiki.x > WIDTH - jiki.width) jiki.x = WIDTH - jiki.width;
+		if (jiki.y < 0) jiki.y = 0;
+		if (jiki.y > HEIGHT - jiki.height) jiki.y = HEIGHT - jiki.height;
+	}
 }
 
 /**
@@ -186,6 +197,11 @@ export function drawPlayer(ctx, images, tMs) {
 	} else if (jikiState === 'ban') {
 		ctx.drawImage(frameOf(images[BAN_IMAGE], tMs), Math.round(jiki.x), Math.round(jiki.y));
 	}
+}
+
+/** 検証用: 前方ショット(type1)の現在位置x一覧 */
+export function activeShotXs() {
+	return jikiSh1.filter((s) => s.active).map((s) => Math.round(s.x));
 }
 
 /** 検証用: いま画面にあるショット数 */

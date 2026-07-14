@@ -5,6 +5,31 @@
 export const WIDTH = 600;
 export const HEIGHT = 400;
 
+/** @type {HTMLCanvasElement | null} */
+let screenCanvas = null;
+
+/**
+ * ページ上の座標(clientX/Y)を、canvas の論理座標(600x400)に変換する。
+ * タッチ入力の位置判定に使う
+ * @param {number} clientX
+ * @param {number} clientY
+ * @returns {{ x: number, y: number }}
+ */
+export function toLogical(clientX, clientY) {
+	if (!screenCanvas) return { x: 0, y: 0 };
+	const rect = screenCanvas.getBoundingClientRect();
+	return {
+		x: ((clientX - rect.left) / rect.width) * WIDTH,
+		y: ((clientY - rect.top) / rect.height) * HEIGHT,
+	};
+}
+
+/** クライアント座標の距離を論理座標の距離に換算する係数 @returns {number} */
+export function logicalScale() {
+	if (!screenCanvas) return 1;
+	return WIDTH / screenCanvas.getBoundingClientRect().width;
+}
+
 /**
  * @param {HTMLElement} parent
  * @returns {CanvasRenderingContext2D}
@@ -14,6 +39,7 @@ export function createScreen(parent) {
 	canvas.width = WIDTH;
 	canvas.height = HEIGHT;
 	parent.appendChild(canvas);
+	screenCanvas = canvas;
 
 	const ctx = canvas.getContext('2d');
 	if (!ctx) throw new Error('canvas 2d context を取得できない');

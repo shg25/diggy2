@@ -4,7 +4,15 @@
 // flow.js / state.js / const.js は classic から1文字も変えずに使っている。
 import { createScreen, WIDTH, HEIGHT } from './engine/screen.js';
 import { startLoop } from './engine/loop.js';
-import { initInput, wasPressed, isDown, flushInput } from './engine/input.js';
+import {
+	initInput,
+	wasPressed,
+	isDown,
+	isPointerDown,
+	consumeTaps,
+	suppressCurrentPointer,
+	flushInput,
+} from './engine/input.js';
 import { loadImages, frameOf } from './engine/assets.js';
 import { loadStage2Unlocked, saveStage2Unlocked } from './storage.js';
 import { play, toggleMute, isMuted, soundRequests } from './engine/sound.js';
@@ -35,6 +43,7 @@ import {
 	chJikiSh,
 	chVelJiki,
 	countActiveShots,
+	activeShotXs,
 } from './player.js';
 import { tekis, teki2, resetTekis, drawTekis, rmGroupTeki } from './enemies.js';
 import { pwrs, resetPwrs, drawPwrs } from './items.js';
@@ -93,6 +102,41 @@ let goTimer = 0;
 let loseTimer = 0;
 let winTimer = 0;
 let pausedFrom = STEP_START; // ポーズ解除で戻る先
+let fireCooldown = 0;
+// ホールド連射の間隔(第5回・会長発議)。新規の押下は待たずに即発射
+// するので、最速の連射は物理的な連打で出る
+const AUTOFIRE_INTERVAL = 0.15;
+
+// 画面上ボタンとタイトルメニューの当たり枠(論理座標)
+const PAUSE_BTN = { x: 534, y: 26, w: 26, h: 20 };
+const SOUND_BTN = { x: 566, y: 26, w: 26, h: 20 };
+const MENU_ROWS = [
+	{ x: 240, y: 258, w: 120, h: 22 },
+	{ x: 240, y: 282, w: 120, h: 22 },
+];
+
+/**
+ * @param {{ x: number, y: number }} p
+ * @param {{ x: number, y: number, w: number, h: number }} r
+ */
+function inRect(p, r) {
+	return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
+}
+
+// ポーズの出入り(Pキーと⏸ボタンの共通処理)
+function togglePause() {
+	if (flow.stepFlg === STEP_PAUSE) {
+		setStep(pausedFrom);
+	} else if (
+		flow.stepFlg === STEP_START ||
+		flow.stepFlg === STEP_COME ||
+		flow.stepFlg === STEP_BATTLE ||
+		flow.stepFlg === STEP_WIN
+	) {
+		pausedFrom = flow.stepFlg;
+		setStep(STEP_PAUSE);
+	}
+}
 
 // タイトルのステージ選択(第3回生徒会)
 let selectedStage = 1;
@@ -161,6 +205,23 @@ function text(str, y, size, color) {
 	ctx.fillText(str, WIDTH / 2, y);
 }
 
+// 画面上ボタン(⏸と♪)。常時表示(会長答弁: 画面判定は極力減らす)
+function drawButtons() {
+	/** @type {[{ x: number, y: number, w: number, h: number }, string, boolean][]} */
+	const buttons = [
+		[PAUSE_BTN, 'II', true],
+		[SOUND_BTN, '♪', !isMuted()],
+	];
+	for (const [btn, label, on] of buttons) {
+		ctx.strokeStyle = on ? '#889' : '#454c5c';
+		ctx.strokeRect(btn.x, btn.y, btn.w, btn.h);
+		ctx.fillStyle = on ? '#ccd' : '#454c5c';
+		ctx.font = '12px Verdana, sans-serif';
+		ctx.textAlign = 'center';
+		ctx.fillText(String(label), btn.x + btn.w / 2, btn.y + 15);
+	}
+}
+
 setStep(STEP_TITLE);
 
 startLoop({
@@ -176,12 +237,30 @@ startLoop({
 		// ミュート切替はどの場面でも効く(音を出す変更はユーザー操作の中で行う)
 		if (wasPressed('mute')) toggleMute();
 
+		// タップの振り分け: 画面上ボタン → タイトルメニュー → その他(開始/射撃)
+		let tapAction = false;
+		for (const tap of consumeTaps()) {
+			if (inRect(tap, SOUND_BTN)) {
+				toggleMute();
+				suppressCurrentPointer();
+			} else if (inRect(tap, PAUSE_BTN)) {
+				suppressCurrentPointer();
+				togglePause();
+			} else if (flow.stepFlg === STEP_TITLE && inRect(tap, MENU_ROWS[0])) {
+				selectedStage = 1;
+			} else if (flow.stepFlg === STEP_TITLE && inRect(tap, MENU_ROWS[1])) {
+				if (stage2Unlocked) selectedStage = 2;
+			} else {
+				tapAction = true;
+			}
+		}
+
 		if (flow.stepFlg === STEP_TITLE) {
 			// ステージ選択(解放済みのときだけカーソルが動く)
 			if (stage2Unlocked && (wasPressed('up') || wasPressed('down'))) {
 				selectedStage = selectedStage === 1 ? 2 : 1;
 			}
-			if (wasPressed('action')) {
+			if (wasPressed('action') || tapAction) {
 				// classic の goReady 相当: スコアを戻し、2秒の READY? を挟んで開始
 				state.stageFlg = selectedStage;
 				unlockedNow = false;
@@ -208,15 +287,21 @@ startLoop({
 		) {
 			if (wasPressed('pause')) {
 				// ポーズ突入。時間ごと止める(タイマー類はこの分岐でしか進まない)
-				pausedFrom = flow.stepFlg;
-				setStep(STEP_PAUSE);
+				togglePause();
 				flushInput();
 				return;
 			}
 			goTimer -= dt;
-			// 押しっぱなしで連射(画面内の弾数はプールの3発制限が守る)。
-			// wasPressed も見るのは、フレーム間の一瞬のタップを拾うため
-			if (wasPressed('action') || isDown('action')) makeJikiSh();
+			// 連射: 新規の押下(キー/タップ)は即発射、ホールドは一定間隔。
+			// 画面内の弾数はプールの3発制限が守る
+			fireCooldown -= dt;
+			if (wasPressed('action') || tapAction) {
+				makeJikiSh();
+				fireCooldown = AUTOFIRE_INTERVAL;
+			} else if ((isDown('action') || isPointerDown()) && fireCooldown <= 0) {
+				makeJikiSh();
+				fireCooldown = AUTOFIRE_INTERVAL;
+			}
 			if (wasPressed('shot')) chJikiSh(); // 隠しコマンド(classic の Z)
 			if (wasPressed('speed')) chVelJiki(); // 隠しコマンド(classic の S)
 			if (wasPressed('bomb')) rmGroupTeki(); // 隠しコマンド(classic の B)
@@ -229,8 +314,8 @@ startLoop({
 				if (winTimer <= 0) returnToTitle();
 			}
 		} else if (flow.stepFlg === STEP_PAUSE) {
-			// 停止中は何も進めない。P で即時再開(隠しコマンド含め他は無効)
-			if (wasPressed('pause')) setStep(pausedFrom);
+			// 停止中は何も進めない。P か ⏸ で即時再開(隠しコマンド含め他は無効)
+			if (wasPressed('pause')) togglePause();
 		} else if (flow.stepFlg === STEP_LOSE) {
 			// 操作は効かないが、飛んでいる弾と敵は流れ続ける(classicと同じ)
 			updateShots(dt);
@@ -291,12 +376,14 @@ startLoop({
 			);
 			text('CLASSIC: RIDGE部 → ../classic/', 385, 10, '#667');
 			drawHud(ctx);
+			drawButtons();
 		} else {
 			drawPwrs(ctx, images, tMs);
 			drawTekis(ctx, images, tMs);
 			drawBoss(ctx, images, tMs);
 			drawPlayer(ctx, images, tMs);
 			drawHud(ctx);
+			drawButtons();
 			text(
 				`移動: 矢印 / 射撃: スペース or タップ / P: ポーズ / M: 音(${isMuted() ? 'OFF' : 'ON'})`,
 				385,
@@ -365,6 +452,9 @@ window.jibfreak = {
 		},
 		get soundRequests() {
 			return soundRequests();
+		},
+		get shotXs() {
+			return activeShotXs();
 		},
 	},
 };

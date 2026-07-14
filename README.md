@@ -20,7 +20,8 @@ python3 -m http.server 8720
 ```
 
 - タイトル画面でキーを押すとゲーム開始
-- 矢印キーで移動、Z / スペースで射撃
+- 矢印キーで移動、Z / スペースで射撃(classic)
+- JIB-FREAK MOBILE の操作(PC/スマホ)は [docs/controls.md](docs/controls.md)
 
 ## 開発
 

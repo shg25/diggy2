@@ -13,6 +13,7 @@ import { FPS, TEKI1_SPAWN_RATE, BAN_DURATION_MS, BOMB_DURATION_MS } from './cons
 import { TEKI1_DEFS, BAN_IMAGE } from './defs.js';
 import { advance, isOutOfBounds, isTouching, randInt } from './entity.js';
 import { frameOf } from './engine/assets.js';
+import { play } from './engine/sound.js';
 import { WIDTH, HEIGHT } from './engine/screen.js';
 import { isFight, transitions } from './flow.js';
 import { jiki, jikiSh1, jikiSh2, jikiSh3 } from './player.js';
@@ -76,6 +77,7 @@ function banTeki(t) {
 	t.velocity = 0;
 	t.imageKey = BAN_IMAGE;
 	t.dieTimer = BAN_DURATION_MS / 1000;
+	play('explosion');
 }
 
 /**

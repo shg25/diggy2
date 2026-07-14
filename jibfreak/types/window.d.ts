@@ -14,6 +14,8 @@ interface Window {
 			readonly hiScore: number;
 			readonly selectedStage: number;
 			readonly stage2Unlocked: boolean;
+			readonly soundMuted: boolean;
+			readonly soundRequests: number;
 		};
 	};
 }

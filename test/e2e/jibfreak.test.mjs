@@ -432,6 +432,39 @@ test('ステージ1クリアでステージ2が解放され、リロード後も
 	);
 });
 
+test('効果音: 既定はミュート、Mで切替、イベントで音が要求され、ポーズ中は増えない', async () => {
+	assert.equal(
+		await page.evaluate(() => window.jibfreak.debug.soundMuted),
+		true,
+		'既定が音ありになっている',
+	);
+	await page.keyboard.press('m');
+	await page.waitForTimeout(200);
+	assert.equal(
+		await page.evaluate(() => window.jibfreak.debug.soundMuted),
+		false,
+		'Mでミュート解除できない',
+	);
+
+	await page.evaluate(() => {
+		window.jibfreak.debug.state.muteki = true;
+	});
+	await startGame();
+	const before = await page.evaluate(() => window.jibfreak.debug.soundRequests);
+	await page.keyboard.press('Space'); // 射撃音が要求される
+	await page.waitForTimeout(300);
+	const after = await page.evaluate(() => window.jibfreak.debug.soundRequests);
+	assert.ok(after > before, `射撃で音が要求されない: ${before} → ${after}`);
+
+	// ポーズ中はゲームイベントが起きないので、音の要求も増えない
+	await page.keyboard.press('p');
+	await page.waitForTimeout(300);
+	const paused1 = await page.evaluate(() => window.jibfreak.debug.soundRequests);
+	await page.waitForTimeout(800);
+	const paused2 = await page.evaluate(() => window.jibfreak.debug.soundRequests);
+	assert.equal(paused2, paused1, 'ポーズ中に音が要求された');
+});
+
 test('canvasが論理解像度600x400で存在する', async () => {
 	const size = await page.evaluate(() => {
 		const c = document.querySelector('canvas');

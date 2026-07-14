@@ -7,6 +7,7 @@ import { PWR_SPAWN_RATE } from './const.js';
 import { PWR_DEFS } from './defs.js';
 import { advance, isOutOfBounds, isTouching, randInt } from './entity.js';
 import { frameOf } from './engine/assets.js';
+import { play } from './engine/sound.js';
 import { WIDTH, HEIGHT } from './engine/screen.js';
 import { isFight } from './flow.js';
 import { jiki, chJikiSh, chVelJiki } from './player.js';
@@ -49,6 +50,7 @@ export function spawnPwr() {
 
 /** 取得効果(classic の touchJiki のアイテム分岐から移植) @param {Pwr} p */
 function applyPwr(p) {
+	play('item');
 	if (p.n === 0) chJikiSh();
 	else if (p.n === 1) chVelJiki();
 	else rmGroupTeki();

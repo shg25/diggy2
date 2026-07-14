@@ -6,6 +6,7 @@ import { FPS, BAN_DURATION_MS } from './const.js';
 import { JIKI_SH_DEFS, BAN_IMAGE } from './defs.js';
 import { advance, isOutOfBounds, drawEntity } from './entity.js';
 import { frameOf } from './engine/assets.js';
+import { play } from './engine/sound.js';
 import { WIDTH, HEIGHT } from './engine/screen.js';
 import { isDown } from './engine/input.js';
 
@@ -124,6 +125,7 @@ function startJikiSh(shot, type) {
 		shot.y = jiki.y + 12;
 	}
 	shot.active = true;
+	play('shot');
 }
 
 // --------------------------------------------------

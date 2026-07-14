@@ -7,6 +7,7 @@ import { startLoop } from './engine/loop.js';
 import { initInput, wasPressed, isDown, flushInput } from './engine/input.js';
 import { loadImages, frameOf } from './engine/assets.js';
 import { loadStage2Unlocked, saveStage2Unlocked } from './storage.js';
+import { play, toggleMute, isMuted, soundRequests } from './engine/sound.js';
 import {
 	STEP_TITLE,
 	STEP_READY,
@@ -103,6 +104,7 @@ let unlockedNow = false; // このゲームの勝利で解放した瞬間か
 transitions.come = () => {
 	setStep(STEP_COME);
 	spawnBoss();
+	play('bossCome');
 };
 transitions.battle = () => {
 	setStep(STEP_BATTLE);
@@ -110,12 +112,15 @@ transitions.battle = () => {
 transitions.win = () => {
 	setStep(STEP_WIN);
 	winTimer = 5; // classic goWin: YOU WIN を5秒
+	play('win');
 	// ステージ1を初めてクリアしたらステージ2が解放される(苦労の報酬)
 	if (state.stageFlg === 1 && !stage2Unlocked) {
 		stage2Unlocked = true;
 		unlockedNow = true;
 		saveStage2Unlocked();
+		play('unlock', 0.5); // 勝利ジングルの直後に
 	}
+	if (isNewRecord()) play('record', 1.0);
 };
 
 // 被弾 → GAME OVER(classic の goLose 相当)。
@@ -126,6 +131,8 @@ transitions.lose = () => {
 	setStep(STEP_LOSE);
 	killJiki();
 	getoutBoss(); // ボスは飛び去る(classic)
+	play('hit');
+	if (isNewRecord()) play('record', 0.6);
 	loseTimer = 3;
 };
 
@@ -165,6 +172,9 @@ startLoop({
 			bgX = (bgX + BG_SPEED * dt) % BG_PERIOD;
 			animTime += dt;
 		}
+
+		// ミュート切替はどの場面でも効く(音を出す変更はユーザー操作の中で行う)
+		if (wasPressed('mute')) toggleMute();
 
 		if (flow.stepFlg === STEP_TITLE) {
 			// ステージ選択(解放済みのときだけカーソルが動く)
@@ -273,7 +283,12 @@ startLoop({
 			if (Math.floor(time * 2) % 2 === 0) {
 				text('スペース or タップ で開始', 336, 12, '#fff');
 			}
-			text('↑↓: ステージ選択 / ゲーム中 矢印: 移動 スペース: 射撃 P: ポーズ', 362, 10, '#889');
+			text(
+				`↑↓: ステージ選択 / ゲーム中 矢印: 移動 スペース: 射撃 P: ポーズ / M: 音(${isMuted() ? 'OFF' : 'ON'})`,
+				362,
+				10,
+				'#889',
+			);
 			text('CLASSIC: RIDGE部 → ../classic/', 385, 10, '#667');
 			drawHud(ctx);
 		} else {
@@ -282,7 +297,12 @@ startLoop({
 			drawBoss(ctx, images, tMs);
 			drawPlayer(ctx, images, tMs);
 			drawHud(ctx);
-			text('移動: 矢印 / 射撃: スペース or タップ / P: ポーズ', 385, 10, '#667');
+			text(
+				`移動: 矢印 / 射撃: スペース or タップ / P: ポーズ / M: 音(${isMuted() ? 'OFF' : 'ON'})`,
+				385,
+				10,
+				'#667',
+			);
 			if (flow.stepFlg === STEP_PAUSE) {
 				// 薄暗くして PAUSE(会長答弁: 演出は暗転、再開は即時)
 				ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
@@ -339,6 +359,12 @@ window.jibfreak = {
 		},
 		get stage2Unlocked() {
 			return stage2Unlocked;
+		},
+		get soundMuted() {
+			return isMuted();
+		},
+		get soundRequests() {
+			return soundRequests();
 		},
 	},
 };

@@ -13,6 +13,7 @@ const BINDINGS = {
 	speed: ['s', 'S'], // 隠しコマンド: スピード変更
 	bomb: ['b', 'B'], // 隠しコマンド: ボム
 	pause: ['p', 'P'],
+	mute: ['m', 'M'],
 };
 
 /** @type {Set<string>} いま押されているキー */

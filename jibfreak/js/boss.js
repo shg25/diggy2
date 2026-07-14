@@ -10,6 +10,7 @@ import { FPS, BAN_DURATION_MS } from './const.js';
 import { BOSS_DEFS } from './defs.js';
 import { advance, isOutOfBounds, isTouching } from './entity.js';
 import { frameOf } from './engine/assets.js';
+import { play } from './engine/sound.js';
 import { STEP_COME, STEP_BATTLE, stepFlg, isFight, transitions } from './flow.js';
 import { jiki, jikiSh1, jikiSh3 } from './player.js';
 import { addScore } from './hud.js';
@@ -100,6 +101,7 @@ function banBoss() {
 	boss.velocity = 0;
 	boss.imageKey = BAN_IMAGE;
 	boss.dieTimer = BAN_DURATION_MS / 1000;
+	play('explosion');
 	transitions.win(); // classic では欠けていた配線
 }
 

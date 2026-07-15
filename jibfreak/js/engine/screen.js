@@ -46,12 +46,22 @@ export function createScreen(parent) {
 	ctx.imageSmoothingEnabled = false; // ドット絵をにじませない
 
 	function fit() {
-		const scale = Math.min(window.innerWidth / WIDTH, window.innerHeight / HEIGHT);
+		// innerWidth はコンテンツのはみ出しでズームが変わると値も変わる
+		// (はみ出し→ズーム→再計算…の循環)。ズームの影響を受けない
+		// レイアウトビューポート(documentElement.client*)を基準にする
+		const el = document.documentElement;
+		const scale = Math.min(el.clientWidth / WIDTH, el.clientHeight / HEIGHT);
 		canvas.style.width = `${Math.floor(WIDTH * scale)}px`;
 		canvas.style.height = `${Math.floor(HEIGHT * scale)}px`;
 	}
 	window.addEventListener('resize', fit);
+	// スマホはビューポートの確定がスクリプト実行より遅れることがあり、
+	// 初回の fit が古い寸法で計算される(canvas が画面からはみ出す)。
+	// レイアウト確定後にもう一度合わせ、visualViewport の変化にも追従する
+	window.addEventListener('load', fit);
+	if (window.visualViewport) window.visualViewport.addEventListener('resize', fit);
 	fit();
+	requestAnimationFrame(fit);
 
 	return ctx;
 }

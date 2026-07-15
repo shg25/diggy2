@@ -536,6 +536,39 @@ test('連射: ホールドは間隔が空き、弾同士が密着しない', asy
 	assert.ok(gap > 40, `弾が密着している(間隔${gap}px): ${xs}`);
 });
 
+test('スマホ実寸: canvasが画面に収まり、タップで開始できる', async () => {
+	// スマホ相当の別コンテキストで検証(第5回後日談: はみ出しバグの再発防止)
+	const mctx = await browser.newContext({
+		viewport: { width: 390, height: 844 },
+		hasTouch: true,
+		isMobile: true,
+	});
+	const mpage = await mctx.newPage();
+	const errors = [];
+	mpage.on('pageerror', (e) => errors.push(e.message));
+	await mpage.goto(GAME_URL, { waitUntil: 'load' });
+	await mpage.waitForFunction(() => window.jibfreak !== undefined, null, { timeout: 15000 });
+	await mpage.waitForTimeout(300);
+
+	const probe = await mpage.evaluate(() => {
+		const rect = document.querySelector('canvas')?.getBoundingClientRect();
+		return {
+			x: rect ? Math.round(rect.x) : -1,
+			w: rect ? Math.round(rect.width) : -1,
+			clientW: document.documentElement.clientWidth,
+		};
+	});
+	assert.ok(probe.x >= 0, `canvasが左にはみ出している: x=${probe.x}`);
+	assert.ok(probe.w <= probe.clientW, `canvasが画面より広い: ${probe.w} > ${probe.clientW}`);
+
+	await mpage.touchscreen.tap(195, 700); // メニューを外した位置
+	await mpage.waitForTimeout(400);
+	const step = await mpage.evaluate(() => window.jibfreak.debug.stepFlg);
+	assert.ok(step >= 10, `タップで開始できない: step=${step}`);
+	assert.deepEqual(errors, []);
+	await mctx.close();
+});
+
 test('canvasが論理解像度600x400で存在する', async () => {
 	const size = await page.evaluate(() => {
 		const c = document.querySelector('canvas');

@@ -565,6 +565,34 @@ test('スマホ実寸: canvasが画面に収まり、タップで開始できる
 	await mpage.waitForTimeout(400);
 	const step = await mpage.evaluate(() => window.jibfreak.debug.stepFlg);
 	assert.ok(step >= 10, `タップで開始できない: step=${step}`);
+
+	// 実機のジェスチャ判定を再現: CDPで本物のタッチドラッグを合成し、
+	// ブラウザにスクロールとして乗っ取られない(第5回後日談2の再発防止)
+	await mpage.evaluate(() => {
+		window.jibfreak.debug.state.muteki = true;
+	});
+	await mpage.waitForTimeout(3300); // READY+GO明け
+	const x0 = await mpage.evaluate(() => window.jibfreak.debug.jiki.x);
+	const cdp = await mctx.newCDPSession(mpage);
+	await cdp.send('Input.dispatchTouchEvent', {
+		type: 'touchStart',
+		touchPoints: [{ x: 100, y: 500 }],
+	});
+	for (let i = 1; i <= 12; i++) {
+		await cdp.send('Input.dispatchTouchEvent', {
+			type: 'touchMove',
+			touchPoints: [{ x: 100 + i * 12, y: 500 }],
+		});
+		await mpage.waitForTimeout(30);
+	}
+	const during = await mpage.evaluate(() => ({
+		x: window.jibfreak.debug.jiki.x,
+		scrollY: window.scrollY,
+	}));
+	await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+	assert.ok(during.x - x0 > 60, `ドラッグが乗っ取られた(移動${Math.round(during.x - x0)}px)`);
+	assert.equal(during.scrollY, 0, 'ページがスクロールした');
+
 	assert.deepEqual(errors, []);
 	await mctx.close();
 });

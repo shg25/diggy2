@@ -6,9 +6,17 @@
 		<link rel="icon" href="data:," />
 		<title>JIB-FREAK MOBILE</title>
 		<style>
+			html,
 			body {
 				margin: 0;
-				min-height: 100vh;
+				height: 100%;
+				/* ゲーム画面なのでスクロール等のジェスチャを全て無効化。
+				   manipulation ではパン(スクロール)が残り、実機のChromeが
+				   ドラッグ操作を乗っ取って pointercancel してしまう */
+				touch-action: none;
+				overscroll-behavior: none;
+			}
+			body {
 				display: flex;
 				align-items: center;
 				justify-content: center;
@@ -16,7 +24,7 @@
 			}
 			canvas {
 				image-rendering: pixelated;
-				touch-action: manipulation; /* ダブルタップ拡大を無効化 */
+				touch-action: none;
 			}
 		</style>
 	</head>

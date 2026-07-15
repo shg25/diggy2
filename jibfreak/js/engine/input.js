@@ -67,6 +67,10 @@ export function initInput() {
 	};
 	window.addEventListener('pointerup', end);
 	window.addEventListener('pointercancel', end);
+
+	// 実機のブラウザがドラッグをスクロールとして乗っ取らないよう、
+	// タッチのスクロール既定動作を止める(CSS touch-action: none の保険)
+	window.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 }
 
 /** 押しっぱなし判定 @param {string} action */

@@ -7,12 +7,12 @@
 // 新版では当時の意図どおりに配線する。
 import { state } from './state.js';
 import { FPS, BAN_DURATION_MS } from './const.js';
-import { BOSS_DEFS } from './defs.js';
-import { advance, isOutOfBounds, isTouching } from './entity.js';
+import { BOSS_DEFS, HIT_DEFS } from './defs.js';
+import { advance, isOutOfBounds, isTouching, centerBox } from './entity.js';
 import { frameOf } from './engine/assets.js';
 import { play } from './engine/sound.js';
 import { STEP_COME, STEP_BATTLE, stepFlg, isFight, transitions } from './flow.js';
-import { jiki, jikiSh1, jikiSh3 } from './player.js';
+import { jiki, jikiHitbox, jikiSh1, jikiSh3 } from './player.js';
 import { addScore } from './hud.js';
 import { BAN_IMAGE } from './defs.js';
 
@@ -166,11 +166,25 @@ export function makeBossSh1(num) {
 	}
 }
 
-/** 自機との接触 @param {import('./entity.js').Entity | Boss} e */
+/**
+ * ボスの体当たり判定(第6回生徒会)。画像より各辺 16px 狭い——
+ * 画像矩形のままだと透明部分に触れて死ぬ理不尽があった。
+ * 猫バスの縦向き(width/height が入れ替わる)にもそのまま追従する
+ * @param {Boss} b
+ */
+export function bossBodyBox(b) {
+	const m = HIT_DEFS.bossBodyMargin;
+	return centerBox(b, b.width - m * 2, b.height - m * 2);
+}
+
+/**
+ * 自機との接触。自機側は中央 8x8 の弱点だけを見る
+ * @param {{ x: number, y: number, width: number, height: number }} e 判定矩形
+ */
 function touchJiki(e) {
 	if (state.muteki) return;
 	if (!isFight()) return;
-	if (!isTouching(e, jiki)) return;
+	if (!isTouching(e, jikiHitbox())) return;
 	transitions.lose();
 }
 
@@ -190,7 +204,7 @@ export function tickBoss() {
 				hitJikiSh(boss, false, jikiSh1, 1);
 				if (boss) hitJikiSh(boss, true, jikiSh3, 0.2);
 				if (boss && boss.dieTimer === 0) {
-					touchJiki(boss);
+					touchJiki(bossBodyBox(boss));
 					if (boss.n === 0) tickBoss1(boss);
 					else tickBoss2(boss);
 				}

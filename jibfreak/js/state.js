@@ -10,4 +10,5 @@ export const state = {
 	bombTeki: 0, // ボム有効中フラグ(1の間、雑魚が消える)
 	numTeki: 0, // 1面の雑魚敵の数(湧きで++、画面外/撃破で--)
 	muteki: false, // デバッグ用: trueで自機無敵(検証スクリプトが使う)
+	showHitboxes: false, // デバッグ用: trueで当たり判定の矩形を可視化
 };

@@ -5,6 +5,18 @@ interface Window {
 			readonly stepFlg: number;
 			state: Record<string, number | boolean>;
 			jiki: { x: number; y: number; width: number; height: number };
+			tekis: {
+				x: number;
+				y: number;
+				width: number;
+				height: number;
+				velocity: number;
+				angle: number;
+				life: number;
+				dieTimer: number;
+			}[];
+			readonly teki2: { x: number; y: number; velocity: number } | null;
+			readonly jikiHitbox: { x: number; y: number; width: number; height: number };
 			readonly activeShots: number;
 			readonly enemyCount: number;
 			readonly pwrCount: number;

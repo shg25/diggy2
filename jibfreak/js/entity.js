@@ -55,6 +55,23 @@ export function isTouching(a, b) {
 }
 
 /**
+ * 中心を保って判定サイズだけ差し替えた矩形を返す。
+ * 「見た目=判定」だった classic から、見た目(画像矩形)と判定を
+ * 分離するための道具(第6回生徒会)。isTouching にそのまま渡せる。
+ * @param {{ x: number, y: number, width: number, height: number }} e
+ * @param {number} width
+ * @param {number} height
+ */
+export function centerBox(e, width, height) {
+	return {
+		x: e.x + (e.width - width) / 2,
+		y: e.y + (e.height - height) / 2,
+		width,
+		height,
+	};
+}
+
+/**
  * min〜max の整数乱数(classic の DGE.rand 相当)
  * @param {number} min
  * @param {number} max

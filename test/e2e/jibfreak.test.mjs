@@ -158,6 +158,45 @@ test('敵に当たると GAME OVER になり、タイトルへ戻る', async () 
 	assert.equal(await page.evaluate(() => window.jibfreak.debug.stepFlg), 0, 'タイトルに戻らない');
 });
 
+test('当たり判定: スプライトをかすめても死なず、中央の弱点に重なると死ぬ', async () => {
+	await startGame();
+	await page.waitForFunction(() => window.jibfreak.debug.tekis.length > 0, null, { timeout: 5000 });
+	// 弱点が見た目(32x32)より小さい中央8x8であることを窓口から確認
+	const hitbox = await page.evaluate(() => window.jibfreak.debug.jikiHitbox);
+	assert.equal(hitbox.width, 8);
+	assert.equal(hitbox.height, 8);
+	// 全ての敵を止めて退避し、1体だけ自機スプライトの左上角へ
+	// (見た目は重なるが、中央の弱点 8x8 には届かない)
+	await page.evaluate(() => {
+		const d = window.jibfreak.debug;
+		for (const t of d.tekis) {
+			t.velocity = 0;
+			t.angle = 0;
+			t.x = 550;
+			t.y = 40;
+		}
+		const t = d.tekis[0];
+		t.x = d.jiki.x - 8;
+		t.y = d.jiki.y - 8;
+	});
+	await page.waitForTimeout(700); // 30Hzで20tick以上、判定は毎tick回る
+	assert.ok((await step()) !== 19, 'かすっただけで GAME OVER になった');
+	// 同じ敵を中央の弱点に重ねると死ぬ
+	await page.evaluate(() => {
+		const d = window.jibfreak.debug;
+		const t = d.tekis[0];
+		t.x = d.jiki.x + 8;
+		t.y = d.jiki.y + 8;
+	});
+	let s = await step();
+	const deadline = Date.now() + 3000;
+	while (s !== 19 && Date.now() < deadline) {
+		await page.waitForTimeout(100);
+		s = await step();
+	}
+	assert.equal(s, 19, '弱点に重なっても GAME OVER にならない');
+});
+
 test('ボム(B)で画面の敵がまとめて消えてスコアが入る', async () => {
 	await page.evaluate(() => {
 		window.jibfreak.debug.state.muteki = true;

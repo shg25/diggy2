@@ -71,6 +71,8 @@ export function tickPwrs() {
 		}
 		if (state.muteki) continue; // デバッグ用無敵中は接触処理ごとスキップ(classicと同じ)
 		if (!isFight()) continue;
+		// 取得判定は見た目の矩形のまま(被弾だけ 8x8 に絞った第6回生徒会でも、
+		// アイテムの取り逃しストレスを増やさないため意図して据え置き)
 		if (isTouching(p, jiki)) {
 			pwrs.splice(i, 1);
 			applyPwr(p);

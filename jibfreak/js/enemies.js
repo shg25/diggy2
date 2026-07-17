@@ -10,13 +10,13 @@
 // テストがその罠を踏んだ(レッスン15)。新築では生成する者が数える。
 import { state } from './state.js';
 import { FPS, TEKI1_SPAWN_RATE, BAN_DURATION_MS, BOMB_DURATION_MS } from './const.js';
-import { TEKI1_DEFS, BAN_IMAGE } from './defs.js';
-import { advance, isOutOfBounds, isTouching, randInt } from './entity.js';
+import { TEKI1_DEFS, BAN_IMAGE, HIT_DEFS } from './defs.js';
+import { advance, isOutOfBounds, isTouching, centerBox, randInt } from './entity.js';
 import { frameOf } from './engine/assets.js';
 import { play } from './engine/sound.js';
 import { WIDTH, HEIGHT } from './engine/screen.js';
 import { isFight, transitions } from './flow.js';
-import { jiki, jikiSh1, jikiSh2, jikiSh3 } from './player.js';
+import { jiki, jikiHitbox, jikiSh1, jikiSh2, jikiSh3 } from './player.js';
 import { addScore } from './hud.js';
 import { boss, clearBossShots } from './boss.js';
 
@@ -81,6 +81,16 @@ function banTeki(t) {
 }
 
 /**
+ * 敵の被弾判定(第6回生徒会)。画像より各辺 +4px 甘い——
+ * 会長の「たまに擦り抜けているように見える」を解消する
+ * @param {Teki} t
+ */
+export function tekiHurtbox(t) {
+	const m = HIT_DEFS.tekiMargin;
+	return centerBox(t, t.width + m * 2, t.height + m * 2);
+}
+
+/**
  * 自機ショットとの当たり判定(classic の hitJikiSh から移植)
  * @param {Teki} t
  * @param {boolean} pierce レーザーは敵に当たっても消えない
@@ -89,7 +99,7 @@ function banTeki(t) {
  */
 function hitJikiSh(t, pierce, pool, damage) {
 	for (const shot of pool) {
-		if (shot.active && isTouching(t, shot)) {
+		if (shot.active && isTouching(tekiHurtbox(t), shot)) {
 			t.life -= damage;
 			if (!pierce) {
 				shot.active = false;
@@ -115,7 +125,8 @@ function hitAllJikiSh(t, laserDamage) {
 function touchJiki(t) {
 	if (state.muteki) return; // デバッグ用無敵
 	if (!isFight()) return;
-	if (!isTouching(t, jiki)) return;
+	// 自機側は中央 8x8 の弱点だけを見る(敵の体は画像どおり)
+	if (!isTouching(t, jikiHitbox())) return;
 	transitions.lose();
 }
 

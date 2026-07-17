@@ -3,8 +3,8 @@
 // 変わったのは「DGEスプライト → ただのオブジェクト」と「フレーム基準 → 時間基準」。
 import { state } from './state.js';
 import { FPS, BAN_DURATION_MS } from './const.js';
-import { JIKI_SH_DEFS, BAN_IMAGE } from './defs.js';
-import { advance, isOutOfBounds, drawEntity } from './entity.js';
+import { JIKI_SH_DEFS, BAN_IMAGE, HIT_DEFS } from './defs.js';
+import { advance, isOutOfBounds, drawEntity, centerBox } from './entity.js';
 import { frameOf } from './engine/assets.js';
 import { play } from './engine/sound.js';
 import { WIDTH, HEIGHT } from './engine/screen.js';
@@ -13,6 +13,16 @@ import { isDown, consumePointerDelta } from './engine/input.js';
 export const JIKI_IMAGE = 'gfx/jiki/n.gif';
 
 export const jiki = { x: WIDTH / 2 - 16, y: HEIGHT / 2 - 16, width: 32, height: 32 };
+
+/**
+ * 自機の被弾判定(第6回生徒会)。見た目32x32の中央 8x8 だけが弱点——
+ * プロペラや翼をかすめても死なない。アイテム取得は従来どおり
+ * 見た目の矩形で行う(取り逃しストレスを増やさないため items.js は
+ * jiki をそのまま使う)
+ */
+export function jikiHitbox() {
+	return centerBox(jiki, HIT_DEFS.jiki.width, HIT_DEFS.jiki.height);
+}
 
 /** @type {'alive' | 'ban' | 'gone'} 被弾すると ban(やられ演出) → gone */
 let jikiState = 'alive';

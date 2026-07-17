@@ -33,6 +33,7 @@ import { state } from './state.js';
 import { JIKI_SH_DEFS, TEKI1_DEFS, PWR_DEFS, BAN_IMAGE } from './defs.js';
 import {
 	jiki,
+	jikiHitbox,
 	JIKI_IMAGE,
 	resetJiki,
 	killJiki,
@@ -45,11 +46,12 @@ import {
 	countActiveShots,
 	activeShotXs,
 } from './player.js';
-import { tekis, teki2, resetTekis, drawTekis, rmGroupTeki } from './enemies.js';
+import { tekis, teki2, tekiHurtbox, resetTekis, drawTekis, rmGroupTeki } from './enemies.js';
 import { pwrs, resetPwrs, drawPwrs } from './items.js';
 import {
 	boss,
 	bossShots,
+	bossBodyBox,
 	spawnBoss,
 	getoutBoss,
 	resetBoss,
@@ -382,6 +384,7 @@ startLoop({
 			drawTekis(ctx, images, tMs);
 			drawBoss(ctx, images, tMs);
 			drawPlayer(ctx, images, tMs);
+			if (state.showHitboxes) drawHitboxes(ctx);
 			drawHud(ctx);
 			drawButtons();
 			text(
@@ -412,6 +415,25 @@ startLoop({
 	},
 });
 
+/**
+ * 当たり判定の可視化(デバッグ専用: state.showHitboxes で有効化)。
+ * 赤=自機の弱点、黄=敵の被弾判定、橙=ボスの体当たり・ボス弾
+ * @param {CanvasRenderingContext2D} ctx
+ */
+function drawHitboxes(ctx) {
+	ctx.lineWidth = 1;
+	/** @param {{ x: number, y: number, width: number, height: number }} r @param {string} color */
+	const box = (r, color) => {
+		ctx.strokeStyle = color;
+		ctx.strokeRect(Math.round(r.x) + 0.5, Math.round(r.y) + 0.5, r.width, r.height);
+	};
+	box(jikiHitbox(), '#f44');
+	for (const t of tekis) box(tekiHurtbox(t), '#ff4');
+	if (teki2) box(tekiHurtbox(teki2), '#ff4');
+	if (boss && boss.dieTimer === 0) box(bossBodyBox(boss), '#f84');
+	for (const s of bossShots) box(s, '#f84');
+}
+
 // 検証・デバッグ用の窓口(classicの window.ridge と同じ思想)
 window.jibfreak = {
 	debug: {
@@ -420,6 +442,13 @@ window.jibfreak = {
 		},
 		state,
 		jiki,
+		tekis,
+		get teki2() {
+			return teki2;
+		},
+		get jikiHitbox() {
+			return jikiHitbox();
+		},
 		get activeShots() {
 			return countActiveShots();
 		},

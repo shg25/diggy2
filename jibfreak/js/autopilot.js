@@ -29,20 +29,29 @@ const EDGE = 40; // 画面端のこの幅には自分から入らない
 // 人間の反応速度に寄せた値で、これを縮めると上手く・機械らしく、
 // 伸ばすと下手に・おっとりする(腕前チューニングの入口)
 const DECISION_INTERVAL = 0.2;
-// 回避を決めた直後は、さらに長く判断を寝かせる(会長発議2)。
-// 最近接の脅威1つだけを見るルールは、2つの脅威の間で
-// 「あっちへ避け、すぐこっちへ避け直す」の往復(ピンポン)を起こす。
-// 一度の回避をやり切ってから次を考えることで、往復を減らす
-const DODGE_COMMIT = 0.45;
+// 直前の回避を覚えている時間(会長発議3)。最近接の脅威1つだけを
+// 見るルールは、2つの脅威の間で「あっちへ避け、こっちへ避け直す」
+// の往復(ピンポン)を起こす。往復とはつまり「来た道を引き返す」
+// ことなので、この時間内に逃げ直すときは、前回と反対向きの成分を
+// 捨てて別の角度で逃げる——引き返しの禁止。
+// (判断を長く寝かせる案(0.45秒のやり切り)も試したが、判断しない
+// 窓の間に弾に追いつかれて死亡が増えたため撤回した。ボス弾は
+// 最大 秒速300px、0.45秒で135px——反応距離90pxを突き抜ける)
+const DODGE_MEMORY = 0.6;
 
 let decisionTimer = 0;
 /** @type {string[]} 前回の判断(次の判断までこの操作を続ける) */
 let lastActions = ['action'];
+let memoryTimer = 0;
+/** 前回の回避の向き(成分は -60 / 0 / 60) */
+let lastDodge = { dx: 0, dy: 0 };
 
 /** デモの開始時に判断の記憶を消す */
 export function resetAutopilot() {
 	decisionTimer = 0;
 	lastActions = ['action'];
+	memoryTimer = 0;
+	lastDodge = { dx: 0, dy: 0 };
 }
 
 /** @param {{ x: number, y: number, width: number, height: number }} e */
@@ -85,19 +94,30 @@ function nearestThreat(me) {
  */
 export function autopilotActions(dt) {
 	decisionTimer -= dt;
+	memoryTimer -= dt;
 	if (decisionTimer > 0) return lastActions;
+	decisionTimer = DECISION_INTERVAL;
 
 	const me = centerOf(jiki);
 	const actions = ['action']; // ルール3: 常に撃つ
 	const threat = nearestThreat(me);
-	decisionTimer = threat ? DODGE_COMMIT : DECISION_INTERVAL;
 
 	// 目標地点を決める(ルール1: 回避 > ルール2: 定位置)
 	let target;
 	if (threat) {
 		// 脅威の反対側へ。ただし画面端に追い詰められる方向へは逃げない
-		const dx = me.x <= threat.x ? -60 : 60;
-		const dy = me.y <= threat.y ? -60 : 60;
+		let dx = me.x <= threat.x ? -60 : 60;
+		let dy = me.y <= threat.y ? -60 : 60;
+		// 引き返しの禁止(会長発議3): 逃げた直後にまた逃げるなら、
+		// 前回と反対向きの成分は捨てて、別の角度で逃げる
+		if (memoryTimer > 0) {
+			if (dx === -lastDodge.dx) dx = 0;
+			if (dy === -lastDodge.dy) dy = 0;
+			// 真後ろへ引き返す形なら、上下の広い方へ逃げ直す
+			if (dx === 0 && dy === 0) dy = me.y < HEIGHT / 2 ? 60 : -60;
+		}
+		lastDodge = { dx, dy };
+		memoryTimer = DODGE_MEMORY;
 		target = {
 			x: Math.min(Math.max(me.x + dx, EDGE), WIDTH - EDGE),
 			y: Math.min(Math.max(me.y + dy, EDGE), HEIGHT - EDGE),

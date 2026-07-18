@@ -62,10 +62,19 @@ test('近い敵の反対方向へ逃げる(ルール1が定位置より強い)',
 test('遠い敵は無視して定位置へ戻る', () => {
 	jiki.x = 284;
 	jiki.y = 184; // 中心 (300, 200)。定位置は左
-	tekis.push(tekiAt(560, 200)); // 距離260 > DANGER 90
+	tekis.push(tekiAt(560, 200)); // 距離260 > SAFE 150
 	const a = autopilotActions(1);
 	assert.ok(a.includes('left'), '定位置(左)へ向かわない');
 	assert.ok(!a.includes('right'), '遠い敵から逃げてしまっている');
+});
+
+test('中間距離の脅威とは間合いを保って動かない(境界振り子の防止・会長発議4)', () => {
+	jiki.x = 284;
+	jiki.y = 184; // 中心 (300, 200)
+	tekis.push(tekiAt(180, 200)); // 距離120: DANGER 90 と SAFE 150 の間。定位置との間にいる
+	// ここで定位置(左)へ戻ると脅威の90px圏へ自分から入り直し、
+	// 「逃げる→戻る→逃げる」の振り子になる。戻らずその場で構える
+	assert.deepEqual(autopilotActions(1), ['action']);
 });
 
 test('やられ演出中の敵は脅威に数えない', () => {

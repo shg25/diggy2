@@ -513,6 +513,29 @@ function toClient(lx, ly) {
 	return { x: (800 - cw) / 2 + lx * scale, y: (600 - ch) / 2 + ly * scale };
 }
 
+test('アトラクト: 放置でデモが始まり、CPUが撃ち、操作で復帰し、記録は残らない', async () => {
+	// 何も操作せず放置する(タイトル15秒でデモ開始)
+	await page.waitForFunction(() => window.jibfreak.debug.state.demo === true, null, {
+		timeout: 25000,
+	});
+	assert.notEqual(await step(), 0, 'デモ開始後もタイトルのまま');
+	// 仮想入力が効いている証拠: 誰も触っていないのに弾が出る
+	await page.waitForFunction(() => window.jibfreak.debug.activeShots > 0, null, {
+		timeout: 15000,
+	});
+	// CPUが敵を撃ち落としてスコアが入るのを待つ(死んで再デモでも良い)
+	await page.waitForFunction(() => window.jibfreak.debug.score > 0, null, { timeout: 40000 });
+	// デモの成績はハイスコアにならない
+	assert.equal(await page.evaluate(() => window.jibfreak.debug.hiScore), 0);
+	// 割り当てのないキーでも(ANY KEY)即タイトルへ戻る
+	await page.keyboard.press('x');
+	await page.waitForTimeout(300);
+	assert.equal(await step(), 0, 'タイトルへ戻らない');
+	assert.equal(await page.evaluate(() => window.jibfreak.debug.state.demo), false);
+	const saved = await page.evaluate(() => localStorage.getItem('jibfreak.hiscore'));
+	assert.equal(saved, null, 'デモの成績が保存されている');
+});
+
 test('タッチ: ドラッグで自機が動き、触れている間は自動射撃される', async () => {
 	await page.evaluate(() => {
 		window.jibfreak.debug.state.muteki = true;

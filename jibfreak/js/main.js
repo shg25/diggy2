@@ -11,8 +11,11 @@ import {
 	isPointerDown,
 	consumeTaps,
 	suppressCurrentPointer,
+	setVirtualActions,
+	wasAnyRealInput,
 	flushInput,
 } from './engine/input.js';
+import { autopilotActions } from './autopilot.js';
 import { loadImages, frameOf } from './engine/assets.js';
 import { loadStage2Unlocked, saveStage2Unlocked } from './storage.js';
 import { play, toggleMute, isMuted, soundRequests } from './engine/sound.js';
@@ -109,6 +112,12 @@ let fireCooldown = 0;
 // するので、最速の連射は物理的な連打で出る
 const AUTOFIRE_INTERVAL = 0.15;
 
+// アトラクトモード(第7回)。タイトル放置でCPUのデモプレイが始まる
+const DEMO_IDLE_SEC = 15; // 放置がこの秒数でデモ開始
+const DEMO_MAX_SEC = 45; // デモの上限(死ななくてもタイトルへ戻す)
+let idleTimer = 0;
+let demoTimer = 0;
+
 // 画面上ボタンとタイトルメニューの当たり枠(論理座標)
 const PAUSE_BTN = { x: 534, y: 26, w: 26, h: 20 };
 const SOUND_BTN = { x: 566, y: 26, w: 26, h: 20 };
@@ -159,8 +168,9 @@ transitions.win = () => {
 	setStep(STEP_WIN);
 	winTimer = 5; // classic goWin: YOU WIN を5秒
 	play('win');
-	// ステージ1を初めてクリアしたらステージ2が解放される(苦労の報酬)
-	if (state.stageFlg === 1 && !stage2Unlocked) {
+	// ステージ1を初めてクリアしたらステージ2が解放される(苦労の報酬)。
+	// CPUが倒しても解放しない(デモの成果は何も残さない)
+	if (state.stageFlg === 1 && !stage2Unlocked && !state.demo) {
 		stage2Unlocked = true;
 		unlockedNow = true;
 		saveStage2Unlocked();
@@ -184,6 +194,9 @@ transitions.lose = () => {
 
 // classic の resetSprite + goReturn 相当
 function returnToTitle() {
+	state.demo = false; // デモはタイトルに戻れば必ず終わる
+	setVirtualActions([]);
+	idleTimer = 0;
 	state.velJiki = 5;
 	state.jikiShFlg = 1;
 	resetTekis();
@@ -191,6 +204,21 @@ function returnToTitle() {
 	resetBoss();
 	resetStage();
 	setStep(STEP_TITLE);
+}
+
+// classic の goReady 相当: スコアを戻し、2秒の READY? を挟んで開始
+/** @param {number} stage */
+function startPlay(stage) {
+	state.stageFlg = stage;
+	unlockedNow = false;
+	resetScore();
+	resetJiki();
+	resetTekis();
+	resetPwrs();
+	resetBoss();
+	resetStage();
+	setStep(STEP_READY);
+	stepTimer = 2;
 }
 
 /**
@@ -236,6 +264,18 @@ startLoop({
 			animTime += dt;
 		}
 
+		// アトラクトモード中(第7回): 何か操作されるか時間切れでタイトルへ。
+		// 続いていれば自動操縦に操作を握らせる(実入力の処理より先に立つ)
+		if (state.demo) {
+			demoTimer += dt;
+			if (wasAnyRealInput() || demoTimer >= DEMO_MAX_SEC) {
+				returnToTitle();
+				flushInput();
+				return;
+			}
+			setVirtualActions(autopilotActions());
+		}
+
 		// ミュート切替はどの場面でも効く(音を出す変更はユーザー操作の中で行う)
 		if (wasPressed('mute')) toggleMute();
 
@@ -258,23 +298,20 @@ startLoop({
 		}
 
 		if (flow.stepFlg === STEP_TITLE) {
+			// アトラクト(第7回): 放置15秒でCPUのデモプレイが始まる
+			idleTimer += dt;
+			if (wasAnyRealInput()) idleTimer = 0;
+			if (idleTimer >= DEMO_IDLE_SEC) {
+				state.demo = true;
+				demoTimer = 0;
+				idleTimer = 0;
+				startPlay(1); // デモはステージ1固定(会長答弁)
+			}
 			// ステージ選択(解放済みのときだけカーソルが動く)
 			if (stage2Unlocked && (wasPressed('up') || wasPressed('down'))) {
 				selectedStage = selectedStage === 1 ? 2 : 1;
 			}
-			if (wasPressed('action') || tapAction) {
-				// classic の goReady 相当: スコアを戻し、2秒の READY? を挟んで開始
-				state.stageFlg = selectedStage;
-				unlockedNow = false;
-				resetScore();
-				resetJiki();
-				resetTekis();
-				resetPwrs();
-				resetBoss();
-				resetStage();
-				setStep(STEP_READY);
-				stepTimer = 2;
-			}
+			if (wasPressed('action') || tapAction) startPlay(selectedStage);
 		} else if (flow.stepFlg === STEP_READY) {
 			stepTimer -= dt;
 			if (stepTimer <= 0) {
@@ -393,6 +430,11 @@ startLoop({
 				10,
 				'#667',
 			);
+			if (state.demo) {
+				// 会長答弁: DEMO PLAY は点滅なし、PRESS ANY KEY は点滅あり
+				text('DEMO PLAY', 60, 20, '#fc6');
+				if (Math.floor(time * 2) % 2 === 0) text('PRESS ANY KEY', 88, 14, '#fff');
+			}
 			if (flow.stepFlg === STEP_PAUSE) {
 				// 薄暗くして PAUSE(会長答弁: 演出は暗転、再開は即時)
 				ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';

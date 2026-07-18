@@ -29,6 +29,11 @@ const EDGE = 40; // 画面端のこの幅には自分から入らない
 // 人間の反応速度に寄せた値で、これを縮めると上手く・機械らしく、
 // 伸ばすと下手に・おっとりする(腕前チューニングの入口)
 const DECISION_INTERVAL = 0.2;
+// 回避を決めた直後は、さらに長く判断を寝かせる(会長発議2)。
+// 最近接の脅威1つだけを見るルールは、2つの脅威の間で
+// 「あっちへ避け、すぐこっちへ避け直す」の往復(ピンポン)を起こす。
+// 一度の回避をやり切ってから次を考えることで、往復を減らす
+const DODGE_COMMIT = 0.45;
 
 let decisionTimer = 0;
 /** @type {string[]} 前回の判断(次の判断までこの操作を続ける) */
@@ -81,11 +86,11 @@ function nearestThreat(me) {
 export function autopilotActions(dt) {
 	decisionTimer -= dt;
 	if (decisionTimer > 0) return lastActions;
-	decisionTimer = DECISION_INTERVAL;
 
 	const me = centerOf(jiki);
 	const actions = ['action']; // ルール3: 常に撃つ
 	const threat = nearestThreat(me);
+	decisionTimer = threat ? DODGE_COMMIT : DECISION_INTERVAL;
 
 	// 目標地点を決める(ルール1: 回避 > ルール2: 定位置)
 	let target;

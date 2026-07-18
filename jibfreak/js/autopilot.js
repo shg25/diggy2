@@ -24,6 +24,21 @@ const HOME = { x: 120, y: 200 }; // 定位置(画面左の中央)
 const DANGER = 90; // 脅威がこの距離まで近づいたら回避に切り替える
 const DEAD_ZONE = 8; // 目標にこれだけ近ければ動かない(ふらつき防止)
 const EDGE = 40; // 画面端のこの幅には自分から入らない
+// 判断の間隔(会長発議)。毎フレーム(1/60秒)判断し直すと小刻みに
+// 震えて人間離れするので、一度決めた操作をこの秒数だけ続ける。
+// 人間の反応速度に寄せた値で、これを縮めると上手く・機械らしく、
+// 伸ばすと下手に・おっとりする(腕前チューニングの入口)
+const DECISION_INTERVAL = 0.2;
+
+let decisionTimer = 0;
+/** @type {string[]} 前回の判断(次の判断までこの操作を続ける) */
+let lastActions = ['action'];
+
+/** デモの開始時に判断の記憶を消す */
+export function resetAutopilot() {
+	decisionTimer = 0;
+	lastActions = ['action'];
+}
 
 /** @param {{ x: number, y: number, width: number, height: number }} e */
 function centerOf(e) {
@@ -58,10 +73,16 @@ function nearestThreat(me) {
 }
 
 /**
- * 今フレームの操作を決める。返り値は論理アクションの配列
+ * 今フレームの操作を返す。判断は DECISION_INTERVAL ごとにだけ行い、
+ * 間は前回の操作を続ける(人間は1秒に60回も判断し直さない)
+ * @param {number} dt 経過秒
  * @returns {string[]}
  */
-export function autopilotActions() {
+export function autopilotActions(dt) {
+	decisionTimer -= dt;
+	if (decisionTimer > 0) return lastActions;
+	decisionTimer = DECISION_INTERVAL;
+
 	const me = centerOf(jiki);
 	const actions = ['action']; // ルール3: 常に撃つ
 	const threat = nearestThreat(me);
@@ -84,5 +105,6 @@ export function autopilotActions() {
 	else if (target.x > me.x + DEAD_ZONE) actions.push('right');
 	if (target.y < me.y - DEAD_ZONE) actions.push('up');
 	else if (target.y > me.y + DEAD_ZONE) actions.push('down');
+	lastActions = actions;
 	return actions;
 }

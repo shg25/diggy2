@@ -15,7 +15,7 @@ import {
 	wasAnyRealInput,
 	flushInput,
 } from './engine/input.js';
-import { autopilotActions } from './autopilot.js';
+import { autopilotActions, resetAutopilot } from './autopilot.js';
 import { loadImages, frameOf } from './engine/assets.js';
 import { loadStage2Unlocked, saveStage2Unlocked } from './storage.js';
 import { play, toggleMute, isMuted, soundRequests } from './engine/sound.js';
@@ -273,7 +273,7 @@ startLoop({
 				flushInput();
 				return;
 			}
-			setVirtualActions(autopilotActions());
+			setVirtualActions(autopilotActions(dt));
 		}
 
 		// ミュート切替はどの場面でも効く(音を出す変更はユーザー操作の中で行う)
@@ -305,6 +305,7 @@ startLoop({
 				state.demo = true;
 				demoTimer = 0;
 				idleTimer = 0;
+				resetAutopilot();
 				startPlay(1); // デモはステージ1固定(会長答弁)
 			}
 			// ステージ選択(解放済みのときだけカーソルが動く)

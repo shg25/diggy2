@@ -161,26 +161,46 @@ test('警戒中(中間距離に脅威)はアイテムに手を出さない', () 
 	assert.deepEqual(autopilotActions(1), ['action'], 'リスクを冒して取りに行った');
 });
 
-test('遠すぎるアイテム(ITEM_RANGE外)は追わず定位置へ', () => {
-	jiki.x = 384;
-	jiki.y = 184; // 中心 (400, 200)
-	pwrs.push({ x: 28, y: 12, width: 24, height: 16, velocity: 0, angle: 0 }); // 中心 (40, 20): 距離406
-	const a = autopilotActions(1);
-	assert.ok(a.includes('left'), '定位置(左)へ向かわない');
-	assert.ok(!a.includes('up'), '遠出してアイテムを追っている');
+test('遠すぎるアイテム(ITEM_RANGE外)は追わず定位置で構える', () => {
+	jiki.x = 104;
+	jiki.y = 184; // 中心 (120, 200) = 定位置
+	pwrs.push({ x: 548, y: 32, width: 24, height: 16, velocity: 0, angle: 0 }); // 中心 (560, 40): 距離468
+	assert.deepEqual(autopilotActions(1), ['action'], '遠出してアイテムを追っている');
 });
 
-test('1面ボスより右に居たら、空いている縁を通って左へ回り込む(会長発議5)', () => {
+test('流れてくるアイテムは先回りして待ち受ける(会長発議6)', () => {
+	jiki.x = 104;
+	jiki.y = 184; // 中心 (120, 200) = 定位置
+	pwrs.push({ x: 148, y: 192, width: 24, height: 16, velocity: 5, angle: 0 }); // 中心 (160, 200)
+	// 少し先(左40px)を狙うと自分の真上=動かず待つ。左へ流れる
+	// アイテムの方から飛び込んでくる
+	assert.deepEqual(autopilotActions(1), ['action']);
+});
+
+test('1面ボスより右に居たら、自分側の縁を通って左へ回り込む(会長発議5)', () => {
 	state.stageFlg = 1;
 	spawnBoss(); // 1面ボス
 	if (!boss) throw new Error('ボスが居ない');
 	boss.x = 310;
-	boss.y = 100; // 体当たり判定の中心 (449, 132.5)。画面上半分
+	boss.y = 100; // 体当たり判定の中心 (449, 132.5): 画面中央より右まで来ている
 	jiki.x = 544;
-	jiki.y = 284; // 中心 (560, 300): ボスの右、距離約200(回避圏外)
+	jiki.y = 284; // 中心 (560, 300): ボスの右、距離約200(回避圏外)。ボスより下
 	const a = autopilotActions(1);
 	assert.ok(a.includes('left'), '左へ回り込もうとしない');
-	assert.ok(a.includes('down'), 'ボスから遠い下の縁を通ろうとしない');
+	assert.ok(a.includes('down'), '自分側(下)の縁を通ろうとしない');
+});
+
+test('登場途中(画面中央より左)のボスには回り込みしない(会長発議6)', () => {
+	state.stageFlg = 1;
+	spawnBoss();
+	if (!boss) throw new Error('ボスが居ない');
+	boss.x = -100;
+	boss.y = 300; // 体当たり判定の中心 (39, 332.5): まだ左端
+	jiki.x = 284;
+	jiki.y = 184; // 中心 (300, 200): ボスの右だが、脅威も遠い(距離約292)
+	const a = autopilotActions(1);
+	assert.ok(a.includes('left'), '定位置(左)へ向かわない');
+	assert.ok(!a.includes('up'), '開幕から縁(上)に張り付こうとしている');
 });
 
 test('猫バス(2面ボス)は回り込みの対象外(従来の挙動を維持)', () => {

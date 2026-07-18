@@ -27,6 +27,8 @@ const BINDINGS = {
 const down = new Set();
 /** @type {Set<string>} このフレームで押された瞬間のキー */
 const pressed = new Set();
+/** @type {Set<string>} プログラムからの仮想入力(オートパイロットが使う) */
+const virtual = new Set();
 
 // ポインタ(タッチ/マウス)の状態
 let pointerId = -1;
@@ -75,7 +77,27 @@ export function initInput() {
 
 /** 押しっぱなし判定 @param {string} action */
 export function isDown(action) {
+	if (virtual.has(action)) return true;
 	return (BINDINGS[action] ?? []).some((k) => down.has(k));
+}
+
+/**
+ * 仮想入力を丸ごと差し替える(第7回生徒会: アトラクトモード用)。
+ * 論理アクションを直接押すので、キー割り当てを経由しない。
+ * ゲーム側から見れば人間の「押しっぱなし」と区別がつかない
+ * @param {string[]} actions
+ */
+export function setVirtualActions(actions) {
+	virtual.clear();
+	for (const a of actions) virtual.add(a);
+}
+
+/**
+ * このフレームに何か実入力(キーでもタッチでも)があったか。
+ * 割り当てのないキーにも反応する——デモの「PRESS ANY KEY」用
+ */
+export function wasAnyRealInput() {
+	return pressed.size > 0 || pointerFresh;
 }
 
 /** 押した瞬間だけ true @param {string} action */

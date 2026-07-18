@@ -12,6 +12,7 @@ let newRecord = false; // このゲームで自己ベストを更新したか
 /** @param {number} n 加算する点数 */
 export function addScore(n) {
 	score += n;
+	if (state.demo) return; // デモプレイの成績は記録に残さない(第7回生徒会)
 	if (score > hiScore) {
 		hiScore = score;
 		newRecord = true;

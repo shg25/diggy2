@@ -9,6 +9,7 @@ export const state = {
 	jikiShFlg: 1, // ショット種別 1:シングル 2:ダブル 3:レーザー
 	bombTeki: 0, // ボム有効中フラグ(1の間、雑魚が消える)
 	numTeki: 0, // 1面の雑魚敵の数(湧きで++、画面外/撃破で--)
+	demo: false, // アトラクトモード(CPUのデモプレイ)中か
 	muteki: false, // デバッグ用: trueで自機無敵(検証スクリプトが使う)
 	showHitboxes: false, // デバッグ用: trueで当たり判定の矩形を可視化
 };

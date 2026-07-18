@@ -131,6 +131,70 @@ function nearestItem(me) {
 }
 
 /**
+ * 目標地点を決める。優先順位はファイル冒頭のルール一覧のとおりで、
+ * この関数は上から1行1ルールで読めるように保つ
+ * @param {{ x: number, y: number }} me
+ * @returns {{ x: number, y: number }}
+ */
+function decideTarget(me) {
+	const threat = nearestThreat(me);
+	if (threat && threat.dist <= DANGER) return dodgeTarget(me, threat); // 1. 回避
+	const boss1 = flankableBoss();
+	if (boss1 && me.x > boss1.x) return flankTarget(me, boss1); // 2. 回り込み
+	if (threat && threat.dist <= SAFE) return me; // 3. 警戒: 間合いを保って構える
+	const item = nearestItem(me);
+	if (item) return { x: Math.max(item.x - ITEM_LEAD, EDGE), y: item.y }; // 4. 拾い物
+	return HOME; // 5. 位置取り
+}
+
+/**
+ * 回避先: 脅威の反対側へ。引き返しの禁止(会長発議3)で往復を抑え、
+ * 画面端に追い詰められる方向へは逃げない
+ * @param {{ x: number, y: number }} me
+ * @param {{ x: number, y: number }} threat
+ */
+function dodgeTarget(me, threat) {
+	let dx = me.x <= threat.x ? -60 : 60;
+	let dy = me.y <= threat.y ? -60 : 60;
+	if (memoryTimer > 0) {
+		// 逃げた直後にまた逃げるなら、前回と反対向きの成分は捨てて別の角度へ
+		if (dx === -lastDodge.dx) dx = 0;
+		if (dy === -lastDodge.dy) dy = 0;
+		// 真後ろへ引き返す形なら、上下の広い方へ逃げ直す
+		if (dx === 0 && dy === 0) dy = me.y < HEIGHT / 2 ? 60 : -60;
+	}
+	lastDodge = { dx, dy };
+	memoryTimer = DODGE_MEMORY;
+	return {
+		x: Math.min(Math.max(me.x + dx, EDGE), WIDTH - EDGE),
+		y: Math.min(Math.max(me.y + dy, EDGE), HEIGHT - EDGE),
+	};
+}
+
+/**
+ * 回り込みの相手になるボスの中心(体当たり判定基準)。
+ * 対象は戦闘配置(画面中央より右)に着いた1面ボスだけ——
+ * 登場途中に反応すると開幕から縁に張り付くし(会長発議6)、
+ * 画面全体を周回する猫バスは回り込む相手ではない
+ */
+function flankableBoss() {
+	if (!boss || boss.dieTimer > 0 || boss.n !== 0) return null;
+	const c = centerOf(bossBodyBox(boss));
+	return c.x >= WIDTH / 2 ? c : null;
+}
+
+/**
+ * 回り込み先: ボスより右では前方(右向き)ショットが当たらないので、
+ * 自分が今いる側の上下の縁を通って左へ戻る(会長発議5・6)
+ * @param {{ x: number, y: number }} me
+ * @param {{ x: number, y: number }} boss1
+ */
+function flankTarget(me, boss1) {
+	const lane = me.y < boss1.y ? EDGE : HEIGHT - EDGE;
+	return { x: Math.max(me.x - 80, EDGE), y: lane };
+}
+
+/**
  * 今フレームの操作を返す。判断は DECISION_INTERVAL ごとにだけ行い、
  * 間は前回の操作を続ける(人間は1秒に60回も判断し直さない)
  * @param {number} dt 経過秒
@@ -143,51 +207,8 @@ export function autopilotActions(dt) {
 	decisionTimer = DECISION_INTERVAL;
 
 	const me = centerOf(jiki);
-	const actions = ['action']; // ルール6: 常に撃つ
-	const threat = nearestThreat(me);
-
-	// 1面ボスの体当たり判定の中心(回り込みの判定に使う)。
-	// 猫バスは画面全体を周回する別の生き物なので、回り込みの対象外
-	const boss1 = boss && boss.dieTimer === 0 && boss.n === 0 ? centerOf(bossBodyBox(boss)) : null;
-
-	// 目標地点を決める(回避 > 回り込み > 警戒 > 拾い物 > 定位置)
-	let target;
-	const item = nearestItem(me);
-	if (threat && threat.dist <= DANGER) {
-		// 回避: 脅威の反対側へ。ただし画面端に追い詰められる方向へは逃げない
-		let dx = me.x <= threat.x ? -60 : 60;
-		let dy = me.y <= threat.y ? -60 : 60;
-		// 引き返しの禁止(会長発議3): 逃げた直後にまた逃げるなら、
-		// 前回と反対向きの成分は捨てて、別の角度で逃げる
-		if (memoryTimer > 0) {
-			if (dx === -lastDodge.dx) dx = 0;
-			if (dy === -lastDodge.dy) dy = 0;
-			// 真後ろへ引き返す形なら、上下の広い方へ逃げ直す
-			if (dx === 0 && dy === 0) dy = me.y < HEIGHT / 2 ? 60 : -60;
-		}
-		lastDodge = { dx, dy };
-		memoryTimer = DODGE_MEMORY;
-		target = {
-			x: Math.min(Math.max(me.x + dx, EDGE), WIDTH - EDGE),
-			y: Math.min(Math.max(me.y + dy, EDGE), HEIGHT - EDGE),
-		};
-	} else if (boss1 && boss1.x >= WIDTH / 2 && me.x > boss1.x) {
-		// 回り込み(会長発議5): ボスより右では前方(右向き)ショットが
-		// 当たらない。上下の縁を通って左へ戻り、反撃の位置を取り直す。
-		// 発動はボスが画面中央まで来てから(会長発議6: 登場途中の
-		// ボスにまで反応して、開幕から縁に張り付いてしまっていた)。
-		// 通る縁は自分が今いる側——上下どちらでもよい(会長答弁)
-		const lane = me.y < boss1.y ? EDGE : HEIGHT - EDGE;
-		target = { x: Math.max(me.x - 80, EDGE), y: lane };
-	} else if (threat && threat.dist <= SAFE) {
-		target = me; // 警戒: 中間距離の脅威とは間合いを保ち、その場で構える
-	} else if (item) {
-		// 拾い物(会長発議5): 安全なときだけ、少し先回りして取りに行く
-		target = { x: Math.max(item.x - ITEM_LEAD, EDGE), y: item.y };
-	} else {
-		target = HOME;
-	}
-
+	const target = decideTarget(me);
+	const actions = ['action']; // 6. 射撃: 常に撃つ
 	if (target.x < me.x - DEAD_ZONE) actions.push('left');
 	else if (target.x > me.x + DEAD_ZONE) actions.push('right');
 	if (target.y < me.y - DEAD_ZONE) actions.push('up');

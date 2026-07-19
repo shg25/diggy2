@@ -7,7 +7,7 @@ export const state = {
 	stageFlg: 1, // 選択中のステージ(1 or 2)
 	velJiki: 5, // 自機の移動速度
 	jikiShFlg: 1, // ショット種別 1:シングル 2:ダブル 3:レーザー
-	bombTeki: 0, // ボム有効中フラグ(1の間、雑魚が消える)
+	bombTeki: 0, // ボムの残り秒数(>0 の間、雑魚が触れただけで消える)
 	numTeki: 0, // 1面の雑魚敵の数(湧きで++、画面外/撃破で--)
 	demo: false, // アトラクトモード(CPUのデモプレイ)中か
 	muteki: false, // デバッグ用: trueで自機無敵(検証スクリプトが使う)

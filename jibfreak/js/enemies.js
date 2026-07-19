@@ -34,6 +34,7 @@ export function resetTekis() {
 	tekis.length = 0;
 	teki2 = null;
 	state.numTeki = 0;
+	state.bombTeki = 0; // ボムの残り時間もゲームと一緒にリセット
 }
 
 // 1面の敵機作る(classic の makeTeki1 から移植)
@@ -72,6 +73,10 @@ export function spawnTeki1() {
 /** 撃破: スコアを入れて、やられ演出(ban.gif)を出して消す */
 /** @param {Teki} t */
 function banTeki(t) {
+	// 二重撃破を防ぐ(大掃除#1・外部顧問の指摘)。同一tickで通常弾と
+	// レーザーが重なるとスコア二重加算・numTeki負数化が起きていた。
+	// banBoss には最初からあったガードで、雑魚だけ欠けていた
+	if (t.dieTimer > 0) return;
 	state.numTeki--;
 	addScore(t.score);
 	t.velocity = 0;
@@ -184,17 +189,19 @@ export function tickTeki2() {
 }
 
 // ボム(classic の rmGroupTeki から移植)。BOMB_DURATION_MS の間、
-// 雑魚が触れただけで消えるフラグを立てる。ボス弾の消去はボス移植時に追加
+// 雑魚が触れただけで消える。
+// 大掃除#1: setTimeout(壁時計)から tick 基準の残り秒数に変更——
+// ポーズは「時間ごと止める」仕様なのに、ボムの時間だけ進んでいた
 export function rmGroupTeki() {
 	if (boss) clearBossShots(); // classic: ボスがいる間はボス弾も消す
-	state.bombTeki = 1;
-	setTimeout(() => {
-		state.bombTeki = 0;
-	}, BOMB_DURATION_MS);
+	state.bombTeki = BOMB_DURATION_MS / 1000;
 }
 
 // 30Hz の1フレーム分(classic の stage1 interval + 各スプライトの ping 相当)
 export function tickTekis() {
+	// ボムの残り時間はゲーム内時間で減る(ポーズ中は tick が来ないので止まる)
+	if (state.bombTeki > 0) state.bombTeki = Math.max(0, state.bombTeki - TICK);
+
 	// 湧き: 敵が0なら必ず、それ以外は毎フレーム 1/TEKI1_SPAWN_RATE の確率(1面のみ)
 	if (isFight() && state.stageFlg === 1) {
 		if (state.numTeki === 0 || randInt(1, TEKI1_SPAWN_RATE) === 1) spawnTeki1();
@@ -213,7 +220,7 @@ export function tickTekis() {
 			tekis.splice(i, 1);
 			continue;
 		}
-		if (state.bombTeki === 1) {
+		if (state.bombTeki > 0) {
 			banTeki(t); // ボム有効中は触れただけで消える(classic)
 			continue;
 		}

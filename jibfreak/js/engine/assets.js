@@ -21,11 +21,17 @@ export function loadImages(sources) {
 	const anims = {};
 	const jobs = Object.entries(sources).map(async ([name, url]) => {
 		// CDNの一時的な失敗で全体が起動不能にならないよう、少し待って再試行する
-		// (本番デプロイ直後の伝播中に1回の404でゲームが死んだ実績あり)
+		// (本番デプロイ直後の伝播中に1回の404でゲームが死んだ実績あり)。
+		// 大掃除#1(外部顧問の指摘): HTTPエラーだけでなく fetch 自体の
+		// 通信例外(オフライン・回線断)も再試行の対象にする
 		let res = null;
 		for (let attempt = 0; attempt < 3; attempt++) {
-			res = await fetch(url);
-			if (res.ok) break;
+			try {
+				res = await fetch(url);
+				if (res.ok) break;
+			} catch {
+				res = null;
+			}
 			await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
 		}
 		if (!res || !res.ok) throw new Error(`画像の読み込みに失敗: ${url}`);

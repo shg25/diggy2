@@ -8,7 +8,7 @@
 import { state } from './state.js';
 import { FPS, BAN_DURATION_MS } from './const.js';
 import { BOSS_DEFS, HIT_DEFS } from './defs.js';
-import { advance, isOutOfBounds, isTouching, centerBox } from './entity.js';
+import { advance, isOutOfBounds, isTouching, centerBox, randInt } from './entity.js';
 import { frameOf } from './engine/assets.js';
 import { play } from './engine/sound.js';
 import { STEP_COME, STEP_BATTLE, stepFlg, isFight, transitions } from './flow.js';
@@ -35,7 +35,7 @@ const TICK = 1 / FPS;
 /**
  * @typedef {import('./entity.js').Entity & {
  *   life: number, score: number, dieTimer: number,
- *   n: number, turnDir: 'r' | 'l', turnMode: number
+ *   n: number, turnDir: 'r' | 'l', turnMode: number, laserWarn: boolean
  * }} Boss
  * n: ステージ番号-1。turnDir/turnMode: 2面の暴れ状態。
  * classic ではグローバル変数(bossTurn/bossTurnMode)だったが、
@@ -85,6 +85,7 @@ export function spawnBoss() {
 		n,
 		turnDir: 'l',
 		turnMode: 0,
+		laserWarn: false,
 	};
 }
 
@@ -152,12 +153,18 @@ export function makeBossSh1(num) {
 		imageKey: BOSS_SH_IMAGE,
 	});
 
+	// レーザーの溜め予告(大掃除#1・会長「唐突に見える」)。
+	// 発射(num%30===0)の約0.5秒前から砲口と射線を予告する
+	boss.laserWarn = stepFlg === STEP_BATTLE && num % 30 >= 23;
+
 	if (num % 30 === 0 && stepFlg === STEP_BATTLE) {
 		bossShots.push({
 			x: boss.x - 120,
 			y: boss.y + 45,
 			width: 128,
-			height: 2,
+			// 大掃除#1(外部顧問の指摘): 判定2pxは画像(128x8)の1/4しかなく、
+			// 自機の弱点8x8化以降ほぼ当たらない飾りだった。見た目に合わせる
+			height: 8,
 			velocity: 4,
 			angle: 10,
 			active: true,
@@ -207,6 +214,9 @@ export function tickBoss() {
 					touchJiki(bossBodyBox(boss));
 					if (boss.n === 0) tickBoss1(boss);
 					else tickBoss2(boss);
+					// 猫バスの鳴き声(大掃除#1・会長発案)。画面にいる間、
+					// 平均3秒に1回「ニャッ」と鳴く
+					if (boss && boss.n === 1 && randInt(1, 90) === 1) play('meow');
 				}
 			}
 		}
@@ -353,5 +363,23 @@ export function drawBoss(ctx, images, tMs) {
 	}
 	if (boss) {
 		ctx.drawImage(frameOf(images[boss.imageKey], tMs), Math.round(boss.x), Math.round(boss.y));
+	}
+	// レーザーの溜め予告: 砲口の明滅と射線の点滅(素材を増やさず canvas 直描き)
+	if (boss && boss.n === 0 && boss.laserWarn && boss.dieTimer === 0 && stepFlg === STEP_BATTLE) {
+		if (Math.floor(tMs / 90) % 2 === 0) {
+			const mx = boss.x + 8; // レーザー(x: boss.x-120, 幅128)の右端=砲口
+			const my = boss.y + 49;
+			const rad = ((270 - 10) * Math.PI) / 180; // レーザーと同じ進行方向
+			ctx.strokeStyle = 'rgba(255, 96, 96, 0.4)';
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.moveTo(mx, my);
+			ctx.lineTo(mx + Math.sin(rad) * 700, my + Math.cos(rad) * 700);
+			ctx.stroke();
+			ctx.fillStyle = 'rgba(255, 160, 120, 0.9)';
+			ctx.beginPath();
+			ctx.arc(mx, my, 5, 0, Math.PI * 2);
+			ctx.fill();
+		}
 	}
 }

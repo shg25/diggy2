@@ -42,9 +42,9 @@ export function drawHud(ctx) {
 	ctx.fillStyle = '#fff';
 	ctx.font = '10px Verdana, sans-serif';
 	ctx.textAlign = 'left';
-	ctx.fillText(`Score: ${score.toLocaleString()}`, 5, 15);
+	ctx.fillText(`SCORE ${score.toLocaleString()}`, 5, 15);
 	// 20年前のスタブ(newTxtHiScore)が予約していた位置 x:5, y:25 に置く
-	ctx.fillText(`Hi-Score: ${hiScore.toLocaleString()}`, 5, 28);
+	ctx.fillText(`HI-SCORE ${hiScore.toLocaleString()}`, 5, 28);
 	ctx.textAlign = 'right';
 	ctx.fillText(`STAGE ${state.stageFlg}`, WIDTH - 5, 15);
 }

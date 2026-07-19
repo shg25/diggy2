@@ -78,7 +78,7 @@ function noiseBurst(dur, vol, at = 0) {
 
 /**
  * 効果音を鳴らす。ミュート中は数だけ数えて何もしない
- * @param {'shot' | 'explosion' | 'hit' | 'item' | 'bossCome' | 'win' | 'record' | 'unlock'} name
+ * @param {'shot' | 'explosion' | 'hit' | 'item' | 'bossCome' | 'win' | 'record' | 'unlock' | 'meow'} name
  * @param {number} [delaySec] 開始を遅らせる(ジングルの重なり回避用)
  */
 export function play(name, delaySec = 0) {
@@ -116,6 +116,10 @@ export function play(name, delaySec = 0) {
 			beep(659, 0.08, { vol: 0.1, at });
 			beep(880, 0.08, { vol: 0.1, at: at + 0.09 });
 			beep(1174, 0.14, { vol: 0.1, at: at + 0.18 });
+			break;
+		case 'meow': // 猫バスの「ニャッ」(大掃除#1)。上ずってから滑り落ちる三角波
+			beep(620, 0.05, { type: 'triangle', vol: 0.09, slide: 900, at });
+			beep(900, 0.14, { type: 'triangle', vol: 0.09, slide: 420, at: at + 0.05 });
 			break;
 	}
 }

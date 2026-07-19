@@ -143,3 +143,4 @@ codex exec --sandbox read-only "◯◯をレビューしてください。\
 | [06](06-hitbox.md)  | シューティングらしい当たり判定 | `2825bed` |
 | [07](07-attract.md) | アトラクトモード(CPUのデモプレイ) | `3be2d62` |
 | [08 総会01](08-sokai-01.md) | これからの方針(凍結と JIB-FREAK ONLINE) | `c76161d` |
+| [09](09-shokuinshitsu.md) | 職員室の設置(モデルの役割分担) | `d7d2c47` |

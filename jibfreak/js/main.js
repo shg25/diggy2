@@ -94,6 +94,15 @@ function makePixelText(str, px) {
 	pctx.textBaseline = 'top';
 	pctx.fillStyle = LOGO_COLOR;
 	pctx.fillText(str, 1, 1);
+	// にじみ対策(会長指摘): fillText のアンチエイリアスは切れないので、
+	// 輪郭の半透明画素が拡大で大きな半透明ブロックになっていた。
+	// α値にしきい値をかけてドットを「有るか無いか」に二値化する
+	const img = pctx.getImageData(0, 0, c.width, c.height);
+	const d = img.data;
+	for (let i = 3; i < d.length; i += 4) {
+		d[i] = d[i] >= 140 ? 255 : 0;
+	}
+	pctx.putImageData(img, 0, 0);
 	return c;
 }
 const logoMain = makePixelText('JIB-FREAK', 12);

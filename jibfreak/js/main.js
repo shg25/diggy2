@@ -1,7 +1,8 @@
 // JIB-FREAK MOBILE エントリポイント。
-// タイトル → READY → START(戦闘) → LOSE(GAME OVER) → タイトル、まで移植済み。
-// アイテム・ボス・勝利はこれから。
-// flow.js / state.js / const.js は classic から1文字も変えずに使っている。
+// 場面遷移(タイトル/デモ/READY/戦闘/勝敗/ポーズ)・入力の振り分け・
+// 描画の束ねを担う。ゲームの中身は player/enemies/boss/items/stage が持つ。
+// flow.js は classic のコピーに win フックと STEP_PAUSE を足したもの
+// (詳細は docs/lessons と docs/seitokai の各議事録)。
 import { createScreen, WIDTH, HEIGHT } from './engine/screen.js';
 import { startLoop } from './engine/loop.js';
 import {
@@ -67,10 +68,79 @@ import {
 import { updateStage, resetStage } from './stage.js';
 import { resetScore, getScore, getHiScore, isNewRecord, drawHud } from './hud.js';
 
+/**
+ * スマホでURLバーを隠す(会長指摘)。PC(マウス操作)では求めていない
+ * ので、粗いポインタ(タッチ)の端末に限る。iOS Safari は未対応で
+ * 静かに失敗する(catchで無視)。
+ *
+ * 実機検証で判明した罠: Fullscreen API は「ユーザー操作イベントの
+ * 直後」でないと拒否される。HTMLの仕様上「操作とみなされるイベント」
+ * は click/pointerup/keydown 等で、**pointerdown は含まれない**。
+ * ゲーム側のタップ処理は pointerdown を配列に貯めて次の
+ * requestAnimationFrame でまとめて捌く作りのため、この経路を通すと
+ * ブラウザから見て「操作の直後」ではなくなり、HTTPSにしても直らない
+ * 静かな失敗になっていた。そのため、ゲームの入力処理を経由せず、
+ * click イベントに直接反応してその場で呼ぶ(一度だけ)
+ */
+function armFullscreenOnFirstTap() {
+	if (!window.matchMedia('(pointer: coarse)').matches) return;
+	window.addEventListener(
+		'click',
+		() => {
+			document.documentElement
+				.requestFullscreen?.()
+				.catch((e) => console.warn('fullscreen失敗:', e));
+		},
+		{ once: true },
+	);
+}
+
 const parent = document.getElementById('screen');
 if (!parent) throw new Error('#screen がない');
 const ctx = createScreen(parent);
+// ドット絵のゲームなので拡大は常に補間なし(ロゴのピクセル拡大にも必要)
+ctx.imageSmoothingEnabled = false;
 initInput();
+armFullscreenOnFirstTap();
+
+// タイトルロゴ(大掃除#1): 小さく描いた文字を補間なしで拡大して
+// ドット文字にする(フォント追加なしのレトロ演出・会長答弁の案a)。
+// 色はジブリの系譜を意識した暖色(会長答弁: 赤〜ピンク系)
+const LOGO_COLOR = '#f66';
+/**
+ * @param {string} str
+ * @param {number} px 原寸のフォントサイズ(これを整数倍に拡大する)
+ */
+function makePixelText(str, px) {
+	const c = document.createElement('canvas');
+	const pctx = c.getContext('2d');
+	if (!pctx) throw new Error('canvas 2d context を取得できない');
+	pctx.font = `bold ${px}px Verdana, sans-serif`;
+	c.width = Math.ceil(pctx.measureText(str).width) + 2;
+	c.height = Math.ceil(px * 1.3);
+	pctx.font = `bold ${px}px Verdana, sans-serif`; // サイズ変更で失われるため再設定
+	pctx.textBaseline = 'top';
+	pctx.fillStyle = LOGO_COLOR;
+	pctx.fillText(str, 1, 1);
+	// にじみ対策(会長指摘): fillText のアンチエイリアスは切れないので、
+	// 輪郭の半透明画素が拡大で大きな半透明ブロックになっていた。
+	// α値にしきい値をかけてドットを「有るか無いか」に二値化する
+	const img = pctx.getImageData(0, 0, c.width, c.height);
+	const d = img.data;
+	for (let i = 3; i < d.length; i += 4) {
+		d[i] = d[i] >= 140 ? 255 : 0;
+	}
+	pctx.putImageData(img, 0, 0);
+	return c;
+}
+// 元絵の解像度を上げ、最終拡大率を下げる(会長指摘: スマホで歪む)。
+// canvas の内部解像度(600x400)は画面フィットでさらに非整数倍に
+// 拡大されるため、元絵が粗いほど二重拡大のガタつきが目立つ。
+// 最終的な見た目のサイズ(px*倍率)は変えず、元絵をより精密にする
+const LOGO_MAIN_SCALE = 2; // 旧: px12×4倍 → px24×2倍(見た目同じ48px相当)
+const LOGO_SUB_SCALE = 1.5; // 旧: px10×3倍 → px20×1.5倍(見た目同じ30px相当)
+const logoMain = makePixelText('JIB-FREAK', 24);
+const logoSub = makePixelText('MOBILE', 20);
 
 /** @type {Record<string, string>} */
 const sources = {
@@ -93,7 +163,19 @@ for (const key of [BOSS_IMAGE, BOSS_SH_IMAGE, BOSS_LASER_IMAGE, ...BOSS2_IMAGES]
 }
 sources['gfx/teki/20/l.gif'] = 'gfx/teki/20/l.gif'; // とぅと郎
 sources['gfx/teki/20/r.gif'] = 'gfx/teki/20/r.gif';
-const images = await loadImages(sources);
+// 読み込み中の案内(大掃除#1・外部顧問の指摘: 失敗時に永久の黒画面だった)
+ctx.fillStyle = '#889';
+ctx.font = '14px Verdana, sans-serif';
+ctx.textAlign = 'center';
+ctx.fillText('NOW LOADING...', WIDTH / 2, HEIGHT / 2);
+let images;
+try {
+	images = await loadImages(sources);
+} catch (e) {
+	ctx.fillStyle = '#f66';
+	ctx.fillText('LOADING FAILED - PLEASE RELOAD', WIDTH / 2, HEIGHT / 2 + 24);
+	throw e;
+}
 
 // 背景の絵柄は960pxで一周する(classicと同じ素材・同じ周期)
 const BG_PERIOD = 960;
@@ -221,6 +303,21 @@ function startPlay(stage) {
 	stepTimer = 2;
 }
 
+// 1面クリア後の継続(大掃除#1・元の設計の実現)。
+// スコアと装備(ショット強化・スピード)を持ち越して2面へ——
+// ハイスコア狙いは1面から通しで、が基本線(会長答弁)
+function continueToStage2() {
+	state.stageFlg = 2;
+	unlockedNow = false;
+	resetJiki();
+	resetTekis();
+	resetPwrs();
+	resetBoss();
+	resetStage();
+	setStep(STEP_READY);
+	stepTimer = 2;
+}
+
 /**
  * 中央揃えテキスト
  * @param {string} str
@@ -235,20 +332,29 @@ function text(str, y, size, color) {
 	ctx.fillText(str, WIDTH / 2, y);
 }
 
-// 画面上ボタン(⏸と♪)。常時表示(会長答弁: 画面判定は極力減らす)
+// 画面上ボタン(⏸と♪)。常時表示(会長答弁: 画面判定は極力減らす)。
+// 大掃除#1: 薄い塗りを足して「押せる」感を出す(立体感は違和感・会長答弁)。
+// ポーズ記号は文字「II」だとローマ数字に見えるため、2本のバーを図形で描く
 function drawButtons() {
-	/** @type {[{ x: number, y: number, w: number, h: number }, string, boolean][]} */
+	/** @type {[{ x: number, y: number, w: number, h: number }, 'pause' | 'sound', boolean][]} */
 	const buttons = [
-		[PAUSE_BTN, 'II', true],
-		[SOUND_BTN, '♪', !isMuted()],
+		[PAUSE_BTN, 'pause', true],
+		[SOUND_BTN, 'sound', !isMuted()],
 	];
-	for (const [btn, label, on] of buttons) {
+	for (const [btn, kind, on] of buttons) {
+		ctx.fillStyle = on ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.05)';
+		ctx.fillRect(btn.x, btn.y, btn.w, btn.h);
 		ctx.strokeStyle = on ? '#889' : '#454c5c';
 		ctx.strokeRect(btn.x, btn.y, btn.w, btn.h);
 		ctx.fillStyle = on ? '#ccd' : '#454c5c';
-		ctx.font = '12px Verdana, sans-serif';
-		ctx.textAlign = 'center';
-		ctx.fillText(String(label), btn.x + btn.w / 2, btn.y + 15);
+		if (kind === 'pause') {
+			ctx.fillRect(btn.x + 9, btn.y + 5, 3, 10);
+			ctx.fillRect(btn.x + 15, btn.y + 5, 3, 10);
+		} else {
+			ctx.font = '12px Verdana, sans-serif';
+			ctx.textAlign = 'center';
+			ctx.fillText('♪', btn.x + btn.w / 2, btn.y + 15);
+		}
 	}
 }
 
@@ -351,7 +457,12 @@ startLoop({
 			if (flow.stepFlg !== STEP_START || goTimer <= 0) updateStage(dt);
 			if (flow.stepFlg === STEP_WIN) {
 				winTimer -= dt;
-				if (winTimer <= 0) returnToTitle();
+				if (winTimer <= 0) {
+					// 1面クリアは2面へ継続。2面クリアとデモはタイトルへ
+					// (デモは何も残さない・第7回の精神)
+					if (state.stageFlg === 1 && !state.demo) continueToStage2();
+					else returnToTitle();
+				}
 			}
 		} else if (flow.stepFlg === STEP_PAUSE) {
 			// 停止中は何も進めない。P か ⏸ で即時再開(隠しコマンド含め他は無効)
@@ -382,8 +493,21 @@ startLoop({
 		ctx.drawImage(frameOf(images['gfx/bg.gif'], tMs), -bgX + BG_PERIOD, HEIGHT - 320);
 
 		if (flow.stepFlg === STEP_TITLE) {
-			text('JIB-FREAK', 150, 48, '#3c9');
-			text('MOBILE', 195, 30, '#3c9');
+			// ドット文字のロゴ(補間なし拡大)
+			ctx.drawImage(
+				logoMain,
+				Math.round(WIDTH / 2 - (logoMain.width * LOGO_MAIN_SCALE) / 2),
+				100,
+				logoMain.width * LOGO_MAIN_SCALE,
+				logoMain.height * LOGO_MAIN_SCALE,
+			);
+			ctx.drawImage(
+				logoSub,
+				Math.round(WIDTH / 2 - (logoSub.width * LOGO_SUB_SCALE) / 2),
+				168,
+				logoSub.width * LOGO_SUB_SCALE,
+				logoSub.height * LOGO_SUB_SCALE,
+			);
 			const bob = Math.sin(time * 2) * 8;
 			ctx.drawImage(frameOf(images[JIKI_IMAGE], tMs), WIDTH / 2 - 16, 212 + bob);
 
@@ -394,7 +518,7 @@ startLoop({
 				text('STAGE 2', menuY[1], 14, selectedStage === 2 ? '#fff' : '#889');
 			} else {
 				text('STAGE 2', menuY[1], 14, '#454c5c');
-				text('(STAGE 1 をクリアで解放)', menuY[1] + 14, 9, '#556');
+				text('CLEAR STAGE 1 TO UNLOCK', menuY[1] + 14, 10, '#889');
 			}
 			// カーソル自体も2コマのアニメGIF(20年前の芸の細かさ)
 			ctx.drawImage(
@@ -406,15 +530,10 @@ startLoop({
 			);
 
 			if (Math.floor(time * 2) % 2 === 0) {
-				text('スペース or タップ で開始', 336, 12, '#fff');
+				text('PRESS SPACE OR TAP', 336, 14, '#fff');
 			}
-			text(
-				`↑↓: ステージ選択 / ゲーム中 矢印: 移動 スペース: 射撃 P: ポーズ / M: 音(${isMuted() ? 'OFF' : 'ON'})`,
-				362,
-				10,
-				'#889',
-			);
-			text('CLASSIC: RIDGE部 → ../classic/', 385, 10, '#667');
+			text('ARROWS: SELECT & MOVE / SPACE: SHOOT / P: PAUSE / M: SOUND', 362, 10, '#889');
+			text('CLASSIC: RIDGE-BU → ../classic/', 385, 10, '#889');
 			drawHud(ctx);
 			drawButtons();
 		} else {
@@ -425,23 +544,18 @@ startLoop({
 			if (state.showHitboxes) drawHitboxes(ctx);
 			drawHud(ctx);
 			drawButtons();
-			text(
-				`移動: 矢印 / 射撃: スペース or タップ / P: ポーズ / M: 音(${isMuted() ? 'OFF' : 'ON'})`,
-				385,
-				10,
-				'#667',
-			);
-			if (state.demo) {
-				// 会長答弁: DEMO PLAY は点滅なし、PRESS ANY KEY は点滅あり
-				text('DEMO PLAY', 60, 20, '#fc6');
-				if (Math.floor(time * 2) % 2 === 0) text('PRESS ANY KEY', 88, 14, '#fff');
+			text('ARROWS: MOVE / SPACE: SHOOT / P: PAUSE / M: SOUND', 385, 10, '#889');
+			if (state.demo && Math.floor(time * 2) % 2 === 0) {
+				// 大掃除#1(会長答弁): DEMO PLAY は廃止して PRESS ANY KEY のみ。
+				// 位置・サイズはタイトルの開始案内と同じ、点滅も同じ
+				text('PRESS ANY KEY', 336, 14, '#fff');
 			}
 			if (flow.stepFlg === STEP_PAUSE) {
 				// 薄暗くして PAUSE(会長答弁: 演出は暗転、再開は即時)
 				ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
 				ctx.fillRect(0, 0, WIDTH, HEIGHT);
-				text('PAUSE', 200, 24, '#fff');
-				text('P で再開', 225, 11, '#aab');
+				text('PAUSE', 200, 20, '#fff');
+				text('PRESS P OR ⏸ TO RESUME', 225, 14, '#889');
 			} else if (flow.stepFlg === STEP_READY) {
 				text('READY?', 200, 20, '#fff');
 			} else if (flow.stepFlg === STEP_START && goTimer > 0) {
@@ -449,7 +563,7 @@ startLoop({
 			} else if (flow.stepFlg === STEP_WIN) {
 				text('YOU WIN', 200, 20, '#fff');
 				if (isNewRecord()) text('NEW RECORD!', 230, 14, '#fc6');
-				if (unlockedNow) text('STAGE 2 が解放された!', 254, 14, '#3c9');
+				if (unlockedNow) text('STAGE 2 UNLOCKED!', 254, 14, '#fc6');
 			} else if (flow.stepFlg === STEP_LOSE) {
 				text('GAME OVER', 200, 20, '#fff');
 				if (isNewRecord()) text('NEW RECORD!', 230, 14, '#fc6');

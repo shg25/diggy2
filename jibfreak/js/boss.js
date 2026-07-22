@@ -8,7 +8,7 @@
 import { state } from './state.js';
 import { FPS, BAN_DURATION_MS } from './const.js';
 import { BOSS_DEFS, HIT_DEFS } from './defs.js';
-import { advance, isOutOfBounds, isTouching, centerBox } from './entity.js';
+import { advance, isOutOfBounds, isTouching, centerBox, randInt } from './entity.js';
 import { frameOf } from './engine/assets.js';
 import { play } from './engine/sound.js';
 import { STEP_COME, STEP_BATTLE, stepFlg, isFight, transitions } from './flow.js';
@@ -35,7 +35,7 @@ const TICK = 1 / FPS;
 /**
  * @typedef {import('./entity.js').Entity & {
  *   life: number, score: number, dieTimer: number,
- *   n: number, turnDir: 'r' | 'l', turnMode: number
+ *   n: number, turnDir: 'r' | 'l', turnMode: number, laserWarn: boolean
  * }} Boss
  * n: ステージ番号-1。turnDir/turnMode: 2面の暴れ状態。
  * classic ではグローバル変数(bossTurn/bossTurnMode)だったが、
@@ -47,10 +47,11 @@ export let boss = null;
 
 /**
  * @typedef {import('./entity.js').Entity & {
- *   n?: number, life?: number, homing?: 'charging' | 'done'
+ *   n?: number, life?: number, homing?: 'charging' | 'done', laser?: boolean, ageTicks?: number
  * }} BossShot
  * homing: 2面の追尾弾の状態。classic では全弾共有のグローバル turn
- * だったが(レッスン03で指摘した wart)、弾ごとに持つ
+ * だったが(レッスン03で指摘した wart)、弾ごとに持つ。
+ * laser/ageTicks: 1面レーザーが砲口からじわっと伸びる演出用(大掃除#1)
  */
 
 /** @type {BossShot[]} ボス弾(classic の groupBossSh) */
@@ -85,6 +86,7 @@ export function spawnBoss() {
 		n,
 		turnDir: 'l',
 		turnMode: 0,
+		laserWarn: false,
 	};
 }
 
@@ -152,19 +154,30 @@ export function makeBossSh1(num) {
 		imageKey: BOSS_SH_IMAGE,
 	});
 
+	// レーザーの溜め予告(大掃除#1・会長「唐突に見える」)。
+	// 発射(num%30===0)の約0.5秒前から砲口と射線を予告する
+	boss.laserWarn = stepFlg === STEP_BATTLE && num % 30 >= 23;
+
 	if (num % 30 === 0 && stepFlg === STEP_BATTLE) {
 		bossShots.push({
 			x: boss.x - 120,
 			y: boss.y + 45,
 			width: 128,
-			height: 2,
+			// 大掃除#1(外部顧問の指摘): 判定2pxは画像(128x8)の1/4しかなく、
+			// 自機の弱点8x8化以降ほぼ当たらない飾りだった。見た目に合わせる
+			height: 8,
 			velocity: 4,
 			angle: 10,
 			active: true,
 			imageKey: BOSS_LASER_IMAGE,
+			laser: true,
+			ageTicks: 0,
 		});
 	}
 }
+
+// レーザーが砲口からじわっと伸びるのにかける tick 数(30Hz基準・約0.2秒)
+const LASER_GROW_TICKS = 6;
 
 /**
  * ボスの体当たり判定(第6回生徒会)。画像より各辺 16px 狭い——
@@ -207,6 +220,9 @@ export function tickBoss() {
 					touchJiki(bossBodyBox(boss));
 					if (boss.n === 0) tickBoss1(boss);
 					else tickBoss2(boss);
+					// 猫バスの鳴き声(大掃除#1・会長発案)。画面にいる間、
+					// 平均3秒に1回「ニャッ」と鳴く
+					if (boss && boss.n === 1 && randInt(1, 90) === 1) play('meow');
 				}
 			}
 		}
@@ -214,6 +230,7 @@ export function tickBoss() {
 
 	for (let i = bossShots.length - 1; i >= 0; i--) {
 		const s = bossShots[i];
+		if (s.laser && s.ageTicks !== undefined && s.ageTicks < LASER_GROW_TICKS) s.ageTicks += 1;
 		advance(s, TICK);
 		if (isOutOfBounds(s)) {
 			bossShots.splice(i, 1);
@@ -349,9 +366,46 @@ export function makeBossSh2(num) {
  */
 export function drawBoss(ctx, images, tMs) {
 	for (const s of bossShots) {
-		ctx.drawImage(frameOf(images[s.imageKey], tMs), Math.round(s.x), Math.round(s.y));
+		const frame = frameOf(images[s.imageKey], tMs);
+		if (s.laser && s.ageTicks !== undefined && s.ageTicks < LASER_GROW_TICKS) {
+			// 砲口(右端)からじわっと伸びる演出(大掃除#1・会長発案)。
+			// 砲口側を固定し、左の未到達部分だけを描かない
+			const ratio = s.ageTicks / LASER_GROW_TICKS;
+			const visibleW = Math.max(1, Math.round(frame.width * ratio));
+			ctx.drawImage(
+				frame,
+				frame.width - visibleW,
+				0,
+				visibleW,
+				frame.height,
+				Math.round(s.x + s.width - visibleW),
+				Math.round(s.y),
+				visibleW,
+				s.height,
+			);
+			continue;
+		}
+		ctx.drawImage(frame, Math.round(s.x), Math.round(s.y));
 	}
 	if (boss) {
 		ctx.drawImage(frameOf(images[boss.imageKey], tMs), Math.round(boss.x), Math.round(boss.y));
+	}
+	// レーザーの溜め予告: 砲口の明滅と射線の点滅(素材を増やさず canvas 直描き)
+	if (boss && boss.n === 0 && boss.laserWarn && boss.dieTimer === 0 && stepFlg === STEP_BATTLE) {
+		if (Math.floor(tMs / 90) % 2 === 0) {
+			const mx = boss.x + 8; // レーザー(x: boss.x-120, 幅128)の右端=砲口
+			const my = boss.y + 49;
+			const rad = ((270 - 10) * Math.PI) / 180; // レーザーと同じ進行方向
+			ctx.strokeStyle = 'rgba(255, 96, 96, 0.4)';
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.moveTo(mx, my);
+			ctx.lineTo(mx + Math.sin(rad) * 700, my + Math.cos(rad) * 700);
+			ctx.stroke();
+			ctx.fillStyle = 'rgba(255, 160, 120, 0.9)';
+			ctx.beginPath();
+			ctx.arc(mx, my, 5, 0, Math.PI * 2);
+			ctx.fill();
+		}
 	}
 }

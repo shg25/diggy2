@@ -76,7 +76,9 @@ import { resetScore, getScore, getHiScore, isNewRecord, drawHud } from './hud.js
  */
 function requestFullscreenOnMobile() {
 	if (!window.matchMedia('(pointer: coarse)').matches) return;
-	document.documentElement.requestFullscreen?.().catch(() => {});
+	document.documentElement
+		.requestFullscreen?.()
+		.catch((e) => console.warn('fullscreen失敗:', e, 'isSecureContext:', window.isSecureContext));
 }
 
 const parent = document.getElementById('screen');

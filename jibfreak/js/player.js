@@ -59,10 +59,19 @@ export const jikiSh3 = makePool(JIKI_SH_DEFS[2]);
 
 /** 自機を初期位置に戻す */
 export function resetJiki() {
-	jikiState = 'alive';
-	banTimer = 0;
 	jiki.x = WIDTH / 2 - 16;
 	jiki.y = HEIGHT / 2 - 16;
+	clearJikiForNewScene();
+}
+
+/**
+ * 位置は変えずに、被弾状態とショットだけ整える(大掃除#1後の追加)。
+ * ステージ継続で自機の位置を保つ(地続き感)ときに使う——
+ * 弾は前ステージの続きを持ち込まない
+ */
+export function clearJikiForNewScene() {
+	jikiState = 'alive';
+	banTimer = 0;
 	for (const pool of [jikiSh1, jikiSh2, jikiSh3]) {
 		for (const shot of pool) shot.active = false;
 	}

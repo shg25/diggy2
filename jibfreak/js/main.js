@@ -69,16 +69,30 @@ import { updateStage, resetStage } from './stage.js';
 import { resetScore, getScore, getHiScore, isNewRecord, drawHud } from './hud.js';
 
 /**
- * スマホでURLバーを隠す(会長指摘)。Fullscreen API はユーザー操作の
- * 中でしか呼べないため、開始のタップ/キー押下に便乗して要求する。
- * PC(マウス操作)では求めていないので、粗いポインタ(タッチ)の
- * 端末に限る。iOS Safari は未対応で静かに失敗する(catchで無視)
+ * スマホでURLバーを隠す(会長指摘)。PC(マウス操作)では求めていない
+ * ので、粗いポインタ(タッチ)の端末に限る。iOS Safari は未対応で
+ * 静かに失敗する(catchで無視)。
+ *
+ * 実機検証で判明した罠: Fullscreen API は「ユーザー操作イベントの
+ * 直後」でないと拒否される。HTMLの仕様上「操作とみなされるイベント」
+ * は click/pointerup/keydown 等で、**pointerdown は含まれない**。
+ * ゲーム側のタップ処理は pointerdown を配列に貯めて次の
+ * requestAnimationFrame でまとめて捌く作りのため、この経路を通すと
+ * ブラウザから見て「操作の直後」ではなくなり、HTTPSにしても直らない
+ * 静かな失敗になっていた。そのため、ゲームの入力処理を経由せず、
+ * click イベントに直接反応してその場で呼ぶ(一度だけ)
  */
-function requestFullscreenOnMobile() {
+function armFullscreenOnFirstTap() {
 	if (!window.matchMedia('(pointer: coarse)').matches) return;
-	document.documentElement
-		.requestFullscreen?.()
-		.catch((e) => console.warn('fullscreen失敗:', e, 'isSecureContext:', window.isSecureContext));
+	window.addEventListener(
+		'click',
+		() => {
+			document.documentElement
+				.requestFullscreen?.()
+				.catch((e) => console.warn('fullscreen失敗:', e));
+		},
+		{ once: true },
+	);
 }
 
 const parent = document.getElementById('screen');
@@ -87,6 +101,7 @@ const ctx = createScreen(parent);
 // ドット絵のゲームなので拡大は常に補間なし(ロゴのピクセル拡大にも必要)
 ctx.imageSmoothingEnabled = false;
 initInput();
+armFullscreenOnFirstTap();
 
 // タイトルロゴ(大掃除#1): 小さく描いた文字を補間なしで拡大して
 // ドット文字にする(フォント追加なしのレトロ演出・会長答弁の案a)。
@@ -403,10 +418,7 @@ startLoop({
 			if (stage2Unlocked && (wasPressed('up') || wasPressed('down'))) {
 				selectedStage = selectedStage === 1 ? 2 : 1;
 			}
-			if (wasPressed('action') || tapAction) {
-				requestFullscreenOnMobile(); // ユーザー操作の中でだけ呼べる(会長指摘)
-				startPlay(selectedStage);
-			}
+			if (wasPressed('action') || tapAction) startPlay(selectedStage);
 		} else if (flow.stepFlg === STEP_READY) {
 			stepTimer -= dt;
 			if (stepTimer <= 0) {

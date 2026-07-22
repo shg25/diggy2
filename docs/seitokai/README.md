@@ -144,3 +144,4 @@ codex exec --sandbox read-only "◯◯をレビューしてください。\
 | [07](07-attract.md) | アトラクトモード(CPUのデモプレイ) | `3be2d62` |
 | [08 総会01](08-sokai-01.md) | これからの方針(凍結と JIB-FREAK ONLINE) | `c76161d` |
 | [09](09-shokuinshitsu.md) | 職員室の設置(モデルの役割分担) | `d7d2c47` |
+| [10 大掃除01](10-osouji-01.md) | MOBILE を静的サイトとして完成させる | `b9a73d5` |

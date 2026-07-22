@@ -561,8 +561,26 @@ test('アトラクト: 放置でデモが始まり、CPUが撃ち、操作で復
 	await page.waitForFunction(() => window.jibfreak.debug.activeShots > 0, null, {
 		timeout: 15000,
 	});
-	// CPUが敵を撃ち落としてスコアが入るのを待つ(死んで再デモでも良い)
-	await page.waitForFunction(() => window.jibfreak.debug.score > 0, null, { timeout: 40000 });
+	// CPUの射線上に敵を置いて確実に得点させる(かつては「CPUが運良く
+	// 敵を落とすのを待つ」作りで、CIの遅い環境で運負けした——大掃除#1)。
+	// デモが死んで作り直し中の空白があるので、入るまで置き直す
+	let score = 0;
+	const scoreDeadline = Date.now() + 30000;
+	while (score === 0 && Date.now() < scoreDeadline) {
+		await page.evaluate(() => {
+			const d = window.jibfreak.debug;
+			if (d.state.demo && d.tekis.length > 0) {
+				const t = d.tekis[0];
+				t.velocity = 0;
+				t.x = d.jiki.x + 120;
+				t.y = d.jiki.y;
+				t.life = 1;
+			}
+		});
+		await page.waitForTimeout(500);
+		score = await page.evaluate(() => window.jibfreak.debug.score);
+	}
+	assert.ok(score > 0, 'デモ中にスコアが入らない');
 	// デモの成績はハイスコアにならない
 	assert.equal(await page.evaluate(() => window.jibfreak.debug.hiScore), 0);
 	// 割り当てのないキーでも(ANY KEY)即タイトルへ戻る

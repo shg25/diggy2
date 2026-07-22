@@ -47,10 +47,11 @@ export let boss = null;
 
 /**
  * @typedef {import('./entity.js').Entity & {
- *   n?: number, life?: number, homing?: 'charging' | 'done'
+ *   n?: number, life?: number, homing?: 'charging' | 'done', laser?: boolean, ageTicks?: number
  * }} BossShot
  * homing: 2面の追尾弾の状態。classic では全弾共有のグローバル turn
- * だったが(レッスン03で指摘した wart)、弾ごとに持つ
+ * だったが(レッスン03で指摘した wart)、弾ごとに持つ。
+ * laser/ageTicks: 1面レーザーが砲口からじわっと伸びる演出用(大掃除#1)
  */
 
 /** @type {BossShot[]} ボス弾(classic の groupBossSh) */
@@ -169,9 +170,14 @@ export function makeBossSh1(num) {
 			angle: 10,
 			active: true,
 			imageKey: BOSS_LASER_IMAGE,
+			laser: true,
+			ageTicks: 0,
 		});
 	}
 }
+
+// レーザーが砲口からじわっと伸びるのにかける tick 数(30Hz基準・約0.2秒)
+const LASER_GROW_TICKS = 6;
 
 /**
  * ボスの体当たり判定(第6回生徒会)。画像より各辺 16px 狭い——
@@ -224,6 +230,7 @@ export function tickBoss() {
 
 	for (let i = bossShots.length - 1; i >= 0; i--) {
 		const s = bossShots[i];
+		if (s.laser && s.ageTicks !== undefined && s.ageTicks < LASER_GROW_TICKS) s.ageTicks += 1;
 		advance(s, TICK);
 		if (isOutOfBounds(s)) {
 			bossShots.splice(i, 1);
@@ -359,7 +366,26 @@ export function makeBossSh2(num) {
  */
 export function drawBoss(ctx, images, tMs) {
 	for (const s of bossShots) {
-		ctx.drawImage(frameOf(images[s.imageKey], tMs), Math.round(s.x), Math.round(s.y));
+		const frame = frameOf(images[s.imageKey], tMs);
+		if (s.laser && s.ageTicks !== undefined && s.ageTicks < LASER_GROW_TICKS) {
+			// 砲口(右端)からじわっと伸びる演出(大掃除#1・会長発案)。
+			// 砲口側を固定し、左の未到達部分だけを描かない
+			const ratio = s.ageTicks / LASER_GROW_TICKS;
+			const visibleW = Math.max(1, Math.round(frame.width * ratio));
+			ctx.drawImage(
+				frame,
+				frame.width - visibleW,
+				0,
+				visibleW,
+				frame.height,
+				Math.round(s.x + s.width - visibleW),
+				Math.round(s.y),
+				visibleW,
+				s.height,
+			);
+			continue;
+		}
+		ctx.drawImage(frame, Math.round(s.x), Math.round(s.y));
 	}
 	if (boss) {
 		ctx.drawImage(frameOf(images[boss.imageKey], tMs), Math.round(boss.x), Math.round(boss.y));

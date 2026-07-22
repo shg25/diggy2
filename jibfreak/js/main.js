@@ -68,6 +68,17 @@ import {
 import { updateStage, resetStage } from './stage.js';
 import { resetScore, getScore, getHiScore, isNewRecord, drawHud } from './hud.js';
 
+/**
+ * スマホでURLバーを隠す(会長指摘)。Fullscreen API はユーザー操作の
+ * 中でしか呼べないため、開始のタップ/キー押下に便乗して要求する。
+ * PC(マウス操作)では求めていないので、粗いポインタ(タッチ)の
+ * 端末に限る。iOS Safari は未対応で静かに失敗する(catchで無視)
+ */
+function requestFullscreenOnMobile() {
+	if (!window.matchMedia('(pointer: coarse)').matches) return;
+	document.documentElement.requestFullscreen?.().catch(() => {});
+}
+
 const parent = document.getElementById('screen');
 if (!parent) throw new Error('#screen がない');
 const ctx = createScreen(parent);
@@ -105,8 +116,14 @@ function makePixelText(str, px) {
 	pctx.putImageData(img, 0, 0);
 	return c;
 }
-const logoMain = makePixelText('JIB-FREAK', 12);
-const logoSub = makePixelText('MOBILE', 10);
+// 元絵の解像度を上げ、最終拡大率を下げる(会長指摘: スマホで歪む)。
+// canvas の内部解像度(600x400)は画面フィットでさらに非整数倍に
+// 拡大されるため、元絵が粗いほど二重拡大のガタつきが目立つ。
+// 最終的な見た目のサイズ(px*倍率)は変えず、元絵をより精密にする
+const LOGO_MAIN_SCALE = 2; // 旧: px12×4倍 → px24×2倍(見た目同じ48px相当)
+const LOGO_SUB_SCALE = 1.5; // 旧: px10×3倍 → px20×1.5倍(見た目同じ30px相当)
+const logoMain = makePixelText('JIB-FREAK', 24);
+const logoSub = makePixelText('MOBILE', 20);
 
 /** @type {Record<string, string>} */
 const sources = {
@@ -384,7 +401,10 @@ startLoop({
 			if (stage2Unlocked && (wasPressed('up') || wasPressed('down'))) {
 				selectedStage = selectedStage === 1 ? 2 : 1;
 			}
-			if (wasPressed('action') || tapAction) startPlay(selectedStage);
+			if (wasPressed('action') || tapAction) {
+				requestFullscreenOnMobile(); // ユーザー操作の中でだけ呼べる(会長指摘)
+				startPlay(selectedStage);
+			}
 		} else if (flow.stepFlg === STEP_READY) {
 			stepTimer -= dt;
 			if (stepTimer <= 0) {
@@ -459,20 +479,20 @@ startLoop({
 		ctx.drawImage(frameOf(images['gfx/bg.gif'], tMs), -bgX + BG_PERIOD, HEIGHT - 320);
 
 		if (flow.stepFlg === STEP_TITLE) {
-			// ドット文字のロゴ(4倍/3倍に補間なし拡大)
+			// ドット文字のロゴ(補間なし拡大)
 			ctx.drawImage(
 				logoMain,
-				Math.round(WIDTH / 2 - logoMain.width * 2),
+				Math.round(WIDTH / 2 - (logoMain.width * LOGO_MAIN_SCALE) / 2),
 				100,
-				logoMain.width * 4,
-				logoMain.height * 4,
+				logoMain.width * LOGO_MAIN_SCALE,
+				logoMain.height * LOGO_MAIN_SCALE,
 			);
 			ctx.drawImage(
 				logoSub,
-				Math.round(WIDTH / 2 - (logoSub.width * 3) / 2),
+				Math.round(WIDTH / 2 - (logoSub.width * LOGO_SUB_SCALE) / 2),
 				168,
-				logoSub.width * 3,
-				logoSub.height * 3,
+				logoSub.width * LOGO_SUB_SCALE,
+				logoSub.height * LOGO_SUB_SCALE,
 			);
 			const bob = Math.sin(time * 2) * 8;
 			ctx.drawImage(frameOf(images[JIKI_IMAGE], tMs), WIDTH / 2 - 16, 212 + bob);

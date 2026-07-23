@@ -40,6 +40,7 @@ import {
 	jikiHitbox,
 	JIKI_IMAGE,
 	resetJiki,
+	clearJikiForNewScene,
 	killJiki,
 	moveJikiByInput,
 	updateShots,
@@ -305,11 +306,14 @@ function startPlay(stage) {
 
 // 1面クリア後の継続(大掃除#1・元の設計の実現)。
 // スコアと装備(ショット強化・スピード)を持ち越して2面へ——
-// ハイスコア狙いは1面から通しで、が基本線(会長答弁)
+// ハイスコア狙いは1面から通しで、が基本線(会長答弁)。
+// 自機の位置も引き継ぐ(会長追加指摘: 地続き感を出したい)ので、
+// resetJiki(位置を初期化)ではなく clearJikiForNewScene(弾と
+// 被弾状態だけ整える)を使う
 function continueToStage2() {
 	state.stageFlg = 2;
 	unlockedNow = false;
-	resetJiki();
+	clearJikiForNewScene();
 	resetTekis();
 	resetPwrs();
 	resetBoss();

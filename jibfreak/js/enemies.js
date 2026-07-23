@@ -70,15 +70,20 @@ export function spawnTeki1() {
 	state.numTeki++; // 生成する者が数える
 }
 
-/** 撃破: スコアを入れて、やられ演出(ban.gif)を出して消す */
-/** @param {Teki} t */
-function banTeki(t) {
+/**
+ * 撃破: スコアを入れて、やられ演出(ban.gif)を出して消す
+ * @param {Teki} t
+ * @param {boolean} [scored] false ならスコアを入れない(ボム撃破用)
+ */
+function banTeki(t, scored = true) {
 	// 二重撃破を防ぐ(大掃除#1・外部顧問の指摘)。同一tickで通常弾と
 	// レーザーが重なるとスコア二重加算・numTeki負数化が起きていた。
 	// banBoss には最初からあったガードで、雑魚だけ欠けていた
 	if (t.dieTimer > 0) return;
 	state.numTeki--;
-	addScore(t.score);
+	// ボムでの一掃はスコアを入れない(大掃除#1後の追加・会長指摘:
+	// 一気に大量加算されるとハイスコア狙いがボムありきになってしまう)
+	if (scored) addScore(t.score);
 	t.velocity = 0;
 	t.imageKey = BAN_IMAGE;
 	t.dieTimer = BAN_DURATION_MS / 1000;
@@ -202,8 +207,11 @@ export function tickTekis() {
 	// ボムの残り時間はゲーム内時間で減る(ポーズ中は tick が来ないので止まる)
 	if (state.bombTeki > 0) state.bombTeki = Math.max(0, state.bombTeki - TICK);
 
-	// 湧き: 敵が0なら必ず、それ以外は毎フレーム 1/TEKI1_SPAWN_RATE の確率(1面のみ)
-	if (isFight() && state.stageFlg === 1) {
+	// 湧き: 敵が0なら必ず、それ以外は毎フレーム 1/TEKI1_SPAWN_RATE の確率(1面のみ)。
+	// ボム中は湧かせない(大掃除#1の検証で発覚): ボムがnumTekiを即0に
+	// 戻すため、この条件と組み合わさるとボム有効中の毎tick「敵が0なら
+	// 必ず湧く」が暴走し、湧いては即死ぬ敵が積み重なっていた
+	if (isFight() && state.stageFlg === 1 && state.bombTeki === 0) {
 		if (state.numTeki === 0 || randInt(1, TEKI1_SPAWN_RATE) === 1) spawnTeki1();
 	}
 
@@ -221,7 +229,7 @@ export function tickTekis() {
 			continue;
 		}
 		if (state.bombTeki > 0) {
-			banTeki(t); // ボム有効中は触れただけで消える(classic)
+			banTeki(t, false); // ボム有効中は触れただけで消える(classic)。スコアは入れない
 			continue;
 		}
 		hitAllJikiSh(t, 0.8);

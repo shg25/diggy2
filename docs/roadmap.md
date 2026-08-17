@@ -8,7 +8,7 @@
 **系譜で保存する。** classic 凍結の前例を、もう一段繰り返す:
 
 ```
-RIDGE部 (2005, DHTML)            classic/  … 凍結済み。当時のまま
+RIDGE部 (2010年ごろ, DHTML)            classic/  … 凍結済み。当時のまま
 JIB-FREAK MOBILE (2026, canvas)  jibfreak/ … 大掃除で「静的サイトとして完成」→ 凍結
 JIB-FREAK ONLINE (次章)          online/   … オンライン化はすべてこちら
 ```

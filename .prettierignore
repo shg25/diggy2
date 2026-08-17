@@ -2,3 +2,4 @@ classic/lib/
 node_modules/
 package-lock.json
 *.md
+slides/*/index.html

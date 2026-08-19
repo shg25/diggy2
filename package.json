@@ -10,10 +10,12 @@
 		"prepare": "git config core.hooksPath .githooks",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
-		"typecheck": "tsc"
+		"typecheck": "tsc",
+		"slides": "marp slides/bunkasai-01/slides.md -o slides/bunkasai-01/index.html && marp slides/bunkasai-01/slides.md --pdf --allow-local-files -o slides/bunkasai-01/bunkasai-01.pdf"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
+		"@marp-team/marp-cli": "^4.5.0",
 		"eslint": "^10.7.0",
 		"globals": "^17.7.0",
 		"playwright-core": "^1.61.1",
